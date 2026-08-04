@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loading CrossPresenter...</title>
+  <style>
+    html {
+      background: transparent;
+      height: 100%;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #0d0d1a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: white;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      overflow: hidden;
+      user-select: none;
+      -webkit-app-region: drag;
+      /* Allows moving the window */
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-sizing: border-box;
+    }
+
+    /* Radial gradient background */
+    .bg-glow {
+      position: absolute;
+      width: 150%;
+      height: 150%;
+      background: radial-gradient(circle at center, rgba(124, 106, 247, 0.15) 0%, transparent 60%);
+      animation: pulse 4s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    .container {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .logo-container {
+      margin-bottom: 30px;
+    }
+
+    .logo {
+      font-size: 48px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      background: linear-gradient(135deg, #a89cf7 0%, #7c6af7 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin: 0;
+      filter: drop-shadow(0 4px 12px rgba(124, 106, 247, 0.4));
+    }
+
+    .tagline {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.5);
+      margin-top: 8px;
+      font-weight: 500;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .loading-container {
+      width: 240px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .loading-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 30%;
+      background: linear-gradient(90deg, #7c6af7, #a89cf7, #7c6af7);
+      background-size: 200% 100%;
+      border-radius: 4px;
+      animation: progress 2.5s cubic-bezier(0.4, 0, 0.2, 1) forwards, shimmer 1.5s linear infinite;
+    }
+
+    .status-text {
+      margin-top: 16px;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.4);
+      font-weight: 500;
+      animation: blink 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        transform: scale(1);
+        opacity: 0.8;
+      }
+
+      50% {
+        transform: scale(1.05);
+        opacity: 1;
+      }
+    }
+
+    @keyframes progress {
+      0% {
+        width: 0%;
+        left: 0%;
+      }
+
+      30% {
+        width: 40%;
+        left: 10%;
+      }
+
+      70% {
+        width: 80%;
+        left: 15%;
+      }
+
+      100% {
+        width: 100%;
+        left: 0%;
+      }
+    }
+
+    @keyframes shimmer {
+      0% {
+        background-position: 200% 0;
+      }
+
+      100% {
+        background-position: -200% 0;
+      }
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 0.4;
+      }
+
+      50% {
+        opacity: 0.8;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bg-glow"></div>
+
+  <div class="container">
+    <div class="logo-container">
+      <h1 class="logo">CrossPresenter</h1>
+      <p class="tagline">Presenter Engine</p>
+    </div>
+
+    <div class="loading-container">
+      <div class="loading-bar" id="progressBar"></div>
+    </div>
+    <p class="status-text" id="statusText">Initializing application...</p>
+  </div>
+
+  <script>
+    // Simulate loading states for visual feedback
+    const statuses = [
+      "Initializing application...",
+      "Loading presentation engine...",
+      "Connecting media surfaces...",
+      "Starting Flow...",
+      "Ready to FloW."
+    ];
+    const textElement = document.getElementById('statusText');
+    let idx = 0;
+
+    setInterval(() => {
+      idx = Math.min(idx + 1, statuses.length - 1);
+      textElement.innerText = statuses[idx];
+    }, 700);
+  </script>
+</body>
+
+</html>

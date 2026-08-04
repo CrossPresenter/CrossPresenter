@@ -1,0 +1,35 @@
+# Build outputs
+node_modules/
+dist/
+dist-ssr/
+dist-debug/
+dist_electron/
+client/ndi-addon/build/
+client/ndi-addon/node_modules/
+cpp_client/out/
+
+# Copyrighted Bible data — do not commit
+client/bible/
+client/dist/bibles/
+client/public/bibles/
+
+# Scratch / dev scripts
+client/scratch/
+
+# Data / runtime files
+*.oflow
+*.db
+*.sqlite
+*.db-journal
+
+# Editor / OS
+.vs/
+.idea/
+.vscode/*
+desktop.ini
+.DS_Store
+
+# Secrets
+.env
+.env.*
+*.local

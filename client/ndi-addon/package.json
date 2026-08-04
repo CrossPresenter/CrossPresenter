@@ -1,0 +1,13 @@
+{
+  "name": "ndi-addon",
+  "version": "1.0.0",
+  "description": "Native NDI Sender for Electron",
+  "main": "index.js",
+  "scripts": {
+    "build": "node-gyp rebuild",
+    "clean": "node-gyp clean"
+  },
+  "dependencies": {
+    "node-addon-api": "^8.0.0"
+  }
+}
