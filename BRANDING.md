@@ -1,0 +1,1 @@
+"The CrossPresenter and  it's logo are trademarks of Beniel Sugirthan/GiveFreely studios. While the source code is free to fork under the GNU General Public License v3.0 license, you must change the name, branding, and logos if you distribute a modified or fork version of this software."
