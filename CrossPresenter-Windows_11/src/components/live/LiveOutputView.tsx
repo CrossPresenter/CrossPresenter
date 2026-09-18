@@ -18,10 +18,25 @@ export function LiveOutputView() {
   const [live, setLive] = useState<LiveState>(EMPTY_LIVE_STATE);
 
   useEffect(() => {
+    // `onLiveState` resolves asynchronously, so the resend request is issued
+    // only once the listener is actually registered — otherwise the operator's
+    // answer could arrive before this window is listening and be lost, leaving
+    // a black frame. The `disposed` flag also prevents a StrictMode double-mount
+    // from leaking the first listener when the promise resolves after cleanup.
+    let disposed = false;
     let unlisten: (() => void) | undefined;
-    onLiveState(setLive).then((fn) => (unlisten = fn));
-    requestLiveState();
-    return () => unlisten?.();
+    onLiveState((state) => setLive(state)).then((fn) => {
+      if (disposed) {
+        fn();
+        return;
+      }
+      unlisten = fn;
+      requestLiveState();
+    });
+    return () => {
+      disposed = true;
+      unlisten?.();
+    };
   }, []);
 
   return (

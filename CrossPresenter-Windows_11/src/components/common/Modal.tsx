@@ -5,7 +5,7 @@
  * Escape, backdrop click, the × button — only has to be right in one place.
  */
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import { XIcon } from "./Icons";
 
@@ -18,13 +18,20 @@ interface ModalProps {
 }
 
 export function Modal({ title, onClose, children, footer, widthClassName = "max-w-lg" }: ModalProps) {
+  // Callers often pass an inline arrow (e.g. `() => setBibleOpen(false)`), so
+  // `onClose` is a new function every render. Bind the keydown listener once
+  // and read the latest handler through a ref instead of tearing down and
+  // re-adding the window listener on every parent render.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") onCloseRef.current();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, []);
 
   return (
     <div

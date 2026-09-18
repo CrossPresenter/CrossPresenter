@@ -6,7 +6,7 @@
  * here keeps its own copy of the data.
  */
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { pickMediaFiles } from "../../lib/tauri";
 import { TRANSITIONS } from "../../lib/types";
@@ -232,17 +232,47 @@ function NumberField({
   step: number;
   onCommit: (v: number) => void;
 }) {
+  const display = Math.round(value * 100) / 100;
+  // Keep a local draft so typing does not commit (and push a history entry) on
+  // every keystroke — commit once, on blur/Enter. Otherwise Undo steps through
+  // each interim digit of a number edit.
+  const [draft, setDraft] = useState<string>(String(display));
+  const lastValue = useRef(display);
+  useEffect(() => {
+    if (lastValue.current !== display) {
+      lastValue.current = display;
+      setDraft(String(display));
+    }
+  }, [display]);
+
+  const commit = () => {
+    const parsed = Number(draft);
+    if (!Number.isFinite(parsed)) {
+      setDraft(String(display));
+      return;
+    }
+    const clamped = Math.min(max, Math.max(min, parsed));
+    const rounded = Math.round(clamped * 100) / 100;
+    lastValue.current = rounded;
+    setDraft(String(rounded));
+    if (rounded !== display) onCommit(rounded);
+  };
+
   return (
     <label className="flex flex-col gap-1">
       <span className="cp-label">{label}</span>
       <input
         type="number"
         className="cp-input"
-        value={Math.round(value * 100) / 100}
+        value={draft}
         min={min}
         max={max}
         step={step}
-        onChange={(e) => onCommit(Number(e.target.value))}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+        }}
       />
     </label>
   );

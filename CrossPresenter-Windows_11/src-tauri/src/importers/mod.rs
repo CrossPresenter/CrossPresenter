@@ -289,7 +289,7 @@ pub async fn import_songs(
                     .into_iter()
                     .filter_map(Result::ok)
                 {
-                    if entry.file_type().is_file() && is_candidate(&entry.path()) {
+                    if entry.file_type().is_file() && is_candidate(entry.path()) {
                         files.push(entry.into_path());
                     }
                 }
@@ -342,7 +342,7 @@ pub async fn import_songs(
             });
         }
 
-        items.sort_by(|a, b| a.title.to_lowercase().cmp(&b.title.to_lowercase()));
+        items.sort_by_key(|a| a.title.to_lowercase());
         let songs_imported = items.len();
 
         Ok(ImportSongsReport {

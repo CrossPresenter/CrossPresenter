@@ -55,6 +55,8 @@ export function EditCanvas() {
   function beginDrag(e: React.PointerEvent, layerId: string, handle: Handle, rect: Rect) {
     e.stopPropagation();
     (e.target as Element).setPointerCapture(e.pointerId);
+    // A drag is one history entry — pushing the pre-drag state once here, not
+    // per pointer-move, keeps Undo stepping by gesture rather than by pixel.
     pushHistory();
     drag.current = { layerId, handle, startRect: rect, startX: e.clientX, startY: e.clientY };
   }
@@ -120,6 +122,7 @@ export function EditCanvas() {
             className="relative h-full w-full"
             onPointerMove={onPointerMove}
             onPointerUp={endDrag}
+            onPointerCancel={endDrag}
             onPointerDown={() => selectLayer(null)}
           >
             <SlideCanvas

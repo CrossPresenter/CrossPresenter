@@ -179,17 +179,11 @@ fn song_from_object(obj: &serde_json::Map<String, Value>) -> Option<RawSong> {
     let title = get(obj, &TITLE_KEYS).map(as_text).unwrap_or_default();
 
     // Extract sections from a verse collection if there is one, otherwise from
-    // a single body string.
+    // a single body string. A body that is itself an object (e.g. `"lyrics":
+    // {"v1": "...", "c": "..."}`) is a label-keyed collection, not text.
     let sections = get(obj, &VERSE_COLLECTION_KEYS)
         .and_then(sections_from_collection)
-        .or_else(|| {
-            let body = get(obj, &BODY_KEYS).map(as_text).unwrap_or_default();
-            if body.trim().is_empty() {
-                None
-            } else {
-                Some(sections_from_body(&body))
-            }
-        })?;
+        .or_else(|| as_sections(get(obj, &BODY_KEYS)?))?;
 
     if sections.is_empty() || sections.iter().all(|s| s.text.trim().is_empty()) {
         return None;
@@ -337,6 +331,22 @@ fn sections_from_body(body: &str) -> Vec<Section> {
         body.to_string()
     };
     parse_tagged_body(&cleaned)
+}
+
+/// Sections out of a body value: an object becomes a label-keyed verse
+/// collection, anything else is parsed as tagged text.
+fn as_sections(value: &Value) -> Option<Vec<Section>> {
+    match value {
+        Value::Object(_) => sections_from_collection(value),
+        _ => {
+            let body = as_text(value);
+            if body.trim().is_empty() {
+                None
+            } else {
+                Some(sections_from_body(&body))
+            }
+        }
+    }
 }
 
 #[cfg(test)]

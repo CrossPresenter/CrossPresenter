@@ -297,7 +297,9 @@ export function onLiveState(handler: (state: LiveState) => void): Promise<Unlist
  */
 export function requestLiveState(): void {
   if (!IS_TAURI) return;
-  void emit(LIVE_REQUEST_EVENT, {});
+  emit(LIVE_REQUEST_EVENT, {}).catch((err) => {
+    console.warn("request live state failed", err);
+  });
 }
 
 export function onLiveStateRequest(handler: () => void): Promise<UnlistenFn> {

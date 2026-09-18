@@ -32,6 +32,9 @@ export function BibleModal() {
   const [translationId, setTranslationId] = useState<string | null>(null);
   const [cache, setCache] = useState<Record<string, BibleTranslation>>({});
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  // Translations whose fetch failed. Without this the effect below would retry a
+  // failing translation on every rerender until the app is restarted.
+  const [failedIds, setFailedIds] = useState<Set<string>>(new Set());
 
   const [stage, setStage] = useState<Stage>("books");
   const [bookIndex, setBookIndex] = useState<number | null>(null);
@@ -48,13 +51,19 @@ export function BibleModal() {
   }, [translations, translationId]);
 
   useEffect(() => {
-    if (!translationId || cache[translationId] || loadingId === translationId) return;
-    setLoadingId(translationId);
-    getBibleTranslation(translationId)
-      .then((full) => setCache((c) => ({ ...c, [translationId]: full })))
-      .catch((err) => toast("error", errorMessage(err)))
-      .finally(() => setLoadingId((id) => (id === translationId ? null : id)));
-  }, [translationId, cache, loadingId, toast]);
+    const id = translationId;
+    if (!id || cache[id] || loadingId === id || failedIds.has(id)) return;
+    setLoadingId(id);
+    getBibleTranslation(id)
+      .then((full) => setCache((c) => ({ ...c, [id]: full })))
+      .catch((err) => {
+        // Remember the failure so the effect does not loop, but keep past
+        // failures out of the way of a deliberate retry via the tab.
+        setFailedIds((f) => new Set(f).add(id));
+        toast("error", `Could not load translation: ${errorMessage(err)}`);
+      })
+      .finally(() => setLoadingId((current) => (current === id ? null : current)));
+  }, [translationId, cache, loadingId, failedIds, toast]);
 
   const translation = translationId ? cache[translationId] : undefined;
   const book = bookIndex != null ? translation?.books[bookIndex] : undefined;
@@ -68,6 +77,13 @@ export function BibleModal() {
 
   function selectTranslation(id: string) {
     setTranslationId(id);
+    // A re-click of a failed tab is a deliberate retry.
+    setFailedIds((f) => {
+      if (!f.has(id)) return f;
+      const next = new Set(f);
+      next.delete(id);
+      return next;
+    });
     setStage("books");
     setBookIndex(null);
     setChapterIndex(null);

@@ -11,9 +11,10 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import "../src/styles.css";
-import { windowRole } from "./lib/tauri";
+import { onLiveStateRequest, publishLiveState, windowRole } from "./lib/tauri";
 import { App } from "./App";
 import { LiveOutputView } from "./components/live/LiveOutputView";
+import { useStore } from "./state/store";
 
 /**
  * There's no error boundary anywhere in the tree, and the body background is
@@ -33,9 +34,19 @@ function showCrashOverlay(label: string, detail: unknown) {
   el.style.whiteSpace = "pre-wrap";
   el.style.padding = "24px";
   el.style.overflow = "auto";
+  el.style.cursor = "pointer";
   const stack = detail instanceof Error ? detail.stack : undefined;
-  el.textContent = `${label}\n\n${stack ?? String(detail)}`;
+  el.textContent = `${label}\n\n${stack ?? String(detail)}\n\n— click anywhere or press Esc to dismiss —`;
+  // Dismissible: once the operator has read it, they must be able to clear the
+  // screen and keep working without restarting the app.
+  const dismiss = () => el.remove();
+  el.addEventListener("click", dismiss, { once: true });
+  el.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") dismiss();
+  });
+  el.tabIndex = -1;
   document.body.appendChild(el);
+  el.focus();
 }
 
 window.addEventListener("error", (event) => {
@@ -51,6 +62,18 @@ function Root() {
   // Stage windows are not opened separately today (see monitors.rs) — the
   // Stage view lives as an in-app tab in the operator window instead.
   return <App />;
+}
+
+// A live window mounts with no state of its own and asks to be re-sent
+// whatever is on air; the operator window answers that request.
+if (windowRole() !== "live") {
+  onLiveStateRequest(() => {
+    const store = useStore.getState();
+    store.republishLive();
+    publishLiveState(useStore.getState().live);
+  }).catch((err) => {
+    console.warn("could not subscribe to live-state requests", err);
+  });
 }
 
 createRoot(document.getElementById("root")!).render(
