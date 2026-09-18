@@ -15,19 +15,12 @@ node_modules/
 dist/
 dist-ssr/
 dist-debug/
-dist_electron/
 **/dist/
+**/src-tauri/target/
+**/src-tauri/gen/
 
 # Native NDI addon build artifacts
 ndi-addon/
-
-# Large seed data (produces public/bibles; not needed at runtime)
-bible/
-
-# Design/reference scaffolds (not part of the app)
-design/
-spalsh\ screen/
-scratch/
 
 # Editor / OS
 .vscode/*
@@ -45,7 +38,3 @@ scratch/
 *.local
 .env
 .env.*
-
-# Secrets / phone-camera TLS artifacts (private key must never be committed)
-electron/phonecam-cert.pem
-electron/phonecam-key.pem

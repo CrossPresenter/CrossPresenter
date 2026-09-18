@@ -1,14 +1,12 @@
 # CrossPresenter
 
-A cross-platform presentation application built with Electron, React (Vite), and TypeScript. It displays lyrics, scripture, media, and other content on one or more external/projector displays while you control everything from your main screen.
+A cross-platform presentation application built with Tauri (Rust) and React/TypeScript. It displays lyrics, scripture, media, and other content on one or more external/projector displays while you control everything from your main screen.
 
 > Website: [https://crosspresenter.vercel.app](https://crosspresenter.vercel.app)
 
 ## Download
 
 Grab the latest installer from the [Releases](https://github.com/CrossPresenter/CrossPresenter/releases) page.
-
-- **Windows installer**: `CrossPresenter Setup 0.0.1.exe`
 
 ## Features
 
@@ -20,33 +18,37 @@ Grab the latest installer from the [Releases](https://github.com/CrossPresenter/
 - Media resizing panels, custom themes, and typography controls
 - Recording and NDI output support
 
+## Project Structure
+
+The app is maintained as three independent, platform-specific Tauri project trees rather than one shared codebase, since native integrations (starting with NDI output) are expected to diverge per platform:
+
+- `CrossPresenter-Windows_11/` — Windows build (produces `.msi` / NSIS installers)
+- `CrossPresenter-MacOS/` — macOS build (produces `.dmg` / `.app`)
+- `Crosspresenter-Linux/` — Linux build (produces AppImage / `.deb`)
+- `website/` — the marketing/download website (deployed to Vercel)
+
+Each platform folder is a self-contained Tauri v2 project: `src/` (React UI) + `src-tauri/` (Rust backend — archive/.cpshow engine, song importers, PPTX parsing, Bible module, monitor handling).
+
 ## Getting Started
+
+Run these inside the platform folder matching your OS, e.g. `CrossPresenter-Windows_11/`:
 
 ```bash
 # Install dependencies
 npm install
 
-# Run in development (Vite + Electron)
-npm run electron:dev
+# Run in development
+npm run start
 
-# Type-check / lint
-npm run typecheck
-npm run lint
+# Type-check
+npm run build
 ```
 
 ## Build
 
 ```bash
-# Build the renderer bundle
-npm run build
-
-# Build the Windows installer (writes to dist_electron/)
-npm run build:exe
+# Build the platform installer (writes to src-tauri/target/release/bundle/)
+npm run bundle
 ```
 
-## Project Structure
-
-- `src/` — React renderer (app UI)
-- `electron/` — Electron main process & preload
-- `public/` — static assets (Bible data, splash)
-- `website/` — the marketing/download website (deployed to Vercel)
+CI (`.github/workflows/build.yml`) builds all three platforms on their native GitHub Actions runners on every push to `main`.

@@ -1,0 +1,50 @@
+[package]
+name = "crosspresenter"
+version = "2.0.0"
+description = "CrossPresenter — high-performance worship presentation software"
+authors = ["CrossPresenter"]
+edition = "2021"
+rust-version = "1.77"
+
+[lib]
+name = "crosspresenter_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["protocol-asset"] }
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-opener = "2"
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Archive engine (.cpshow)
+zip = { version = "2", default-features = false, features = ["deflate", "time"] }
+
+# Song import engine
+rusqlite = { version = "0.32", features = ["bundled"] }
+quick-xml = "0.37"
+
+# Concurrency for batch imports
+rayon = "1"
+
+# Utilities
+anyhow = "1"
+thiserror = "2"
+uuid = { version = "1", features = ["v4", "serde"] }
+encoding_rs = "0.8"
+walkdir = "2"
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true
