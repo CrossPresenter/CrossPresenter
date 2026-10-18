@@ -8,9 +8,11 @@ export default function App() {
   const { route, navigate } = useRoute()
 
   return (
-    <div className="min-h-screen bg-[#0c0c1a] text-white">
-      <Nav onNavigate={navigate} />
-      {route === 'downloads' ? <Downloads /> : <Home onNavigate={navigate} />}
+    <div className="min-h-screen bg-[#07070f] text-white">
+      <Nav onNavigate={navigate} active={route} />
+      <div key={route} className="animate-fade-up">
+        {route === 'downloads' ? <Downloads /> : <Home onNavigate={navigate} />}
+      </div>
       <Footer onNavigate={navigate} />
     </div>
   )

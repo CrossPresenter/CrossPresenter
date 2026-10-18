@@ -1,4 +1,4 @@
-import { Download, Apple, Laptop } from 'lucide-react'
+import { Apple, ArrowRight, Download, Laptop } from 'lucide-react'
 
 interface DownloadButtonProps {
   label?: string
@@ -19,27 +19,39 @@ export default function DownloadButton({ label, sub, href, platform = 'windows' 
   return (
     <Wrapper
       {...(!disabled ? { href, target: '_blank', rel: 'noreferrer' } : {})}
-      className={`group flex w-full max-w-sm flex-col gap-1 rounded-2xl p-5 text-left transition-all ${
+      className={`group flex w-full items-center justify-between gap-3 rounded-2xl border p-5 text-left transition-all duration-300 ${
         disabled
-          ? 'cursor-not-allowed border border-white/10 bg-white/[0.03]'
-          : 'border border-brand/40 bg-gradient-to-b from-brand/25 to-brand/10 hover:border-brand/70 hover:shadow-[0_0_30px_rgba(124,106,247,0.25)]'
+          ? 'cursor-not-allowed border-white/10 bg-white/[0.03]'
+          : 'border-white/15 bg-white/[0.05] hover:-translate-y-1 hover:border-brand/50 hover:bg-brand/10 hover:shadow-[0_22px_50px_-25px_rgba(124,106,247,1)]'
       }`}
     >
-      <div className="flex items-center gap-3">
+      <span className="flex items-center gap-3">
         <span
-          className={`flex h-11 w-11 items-center justify-center rounded-xl ${
-            disabled ? 'bg-white/5 text-white/35' : 'bg-brand text-white'
+          className={`flex h-11 w-11 items-center justify-center rounded-2xl transition-all duration-300 ${
+            disabled
+              ? 'bg-white/5 text-white/35'
+              : 'bg-gradient-to-br from-brand to-[#6a8dff] text-white shadow-[0_12px_26px_-12px_rgba(124,106,247,1)] group-hover:scale-105'
           }`}
         >
           {icons[platform]}
         </span>
         <span>
-          <span className={`block text-base font-semibold ${disabled ? 'text-white/40' : 'text-white'}`}>
+          <span className={`font-display block text-base font-semibold ${disabled ? 'text-white/40' : 'text-white'}`}>
             {label ?? 'Download for Windows'}
           </span>
           {sub && <span className="block text-xs text-white/50">{sub}</span>}
         </span>
-      </div>
+      </span>
+      {disabled ? (
+        <span className="shrink-0 rounded-full bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white/35">
+          Soon
+        </span>
+      ) : (
+        <ArrowRight
+          size={16}
+          className="shrink-0 text-white/50 transition-all duration-300 group-hover:translate-x-1 group-hover:text-white"
+        />
+      )}
     </Wrapper>
   )
 }

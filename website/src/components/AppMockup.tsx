@@ -10,9 +10,9 @@ const serviceItems = [
 
 export default function AppMockup() {
   return (
-    <div className="relative">
+    <div className="relative animate-float">
       <div className="absolute -inset-8 rounded-[2rem] bg-brand/20 blur-3xl" aria-hidden />
-      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-surface shadow-2xl shadow-black/50">
+      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-surface shadow-2xl shadow-black/50 transition-transform duration-500 ease-out lg:[transform:perspective(1400px)_rotateY(-8deg)_rotateX(3deg)] lg:hover:[transform:perspective(1400px)_rotateY(0deg)_rotateX(0deg)]">
         {/* Title bar */}
         <div className="flex items-center gap-2 border-b border-white/5 bg-surface-light px-4 py-3">
           <span className="h-3 w-3 rounded-full bg-[#ff5f57]" />
@@ -20,6 +20,9 @@ export default function AppMockup() {
           <span className="h-3 w-3 rounded-full bg-[#28c840]" />
           <span className="ml-3 hidden rounded-md bg-black/30 px-3 py-1 text-[10px] text-white/40 sm:block">
             CrossPresenter — Presenter
+          </span>
+          <span className="ml-auto hidden items-center gap-1.5 rounded-md bg-[#f43f5e]/15 px-2 py-1 text-[9px] font-semibold tracking-wider text-[#fb7185] ring-1 ring-[#f43f5e]/30 sm:flex">
+            <span className="animate-pulse-dot h-1.5 w-1.5 rounded-full bg-[#f43f5e]" /> LIVE
           </span>
         </div>
 
@@ -30,7 +33,7 @@ export default function AppMockup() {
               <span
                 key={i}
                 className={`flex h-6 w-6 items-center justify-center rounded-md ${
-                  i === 1 ? 'bg-brand text-white' : 'text-white/35'
+                  i === 1 ? 'bg-brand text-white shadow-[0_0_14px_rgba(124,106,247,0.5)]' : 'text-white/35'
                 }`}
               >
                 <Icon size={13} />
@@ -56,8 +59,10 @@ export default function AppMockup() {
               {serviceItems.map((item) => (
                 <div
                   key={item.label}
-                  className={`rounded-lg px-2 py-1.5 ${
-                    item.active ? 'bg-brand/20 ring-1 ring-brand/40' : 'bg-white/[0.03]'
+                  className={`rounded-lg px-2 py-1.5 transition-colors ${
+                    item.active
+                      ? 'bg-brand/20 ring-1 ring-brand/40 shadow-[0_0_16px_-6px_rgba(124,106,247,0.8)]'
+                      : 'bg-white/[0.03]'
                   }`}
                 >
                   <p className={`truncate text-[9px] font-medium ${item.active ? 'text-white' : 'text-white/45'}`}>
@@ -75,19 +80,26 @@ export default function AppMockup() {
               className="absolute inset-0"
               style={{
                 background:
-                  'radial-gradient(120% 120% at 20% 0%, #3b2a75 0%, #1a1440 45%, #0d0b24 100%)',
+                  'radial-gradient(120% 120% at 20% 0%, #4a37a0 0%, #1c1550 45%, #0d0b24 100%)',
               }}
+            />
+            <div
+              className="absolute inset-0"
+              style={{
+                background: 'radial-gradient(80% 60% at 50% 100%, rgba(71,191,255,0.18) 0%, transparent 70%)',
+              }}
+              aria-hidden
             />
             <div className="relative flex h-56 flex-col items-center justify-center gap-2 p-6 text-center">
               <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-brand-light">
                 Verse 2 of 4
               </p>
-              <h3 className="max-w-xs text-2xl font-bold leading-tight text-white">
+              <h3 className="max-w-xs text-2xl font-bold leading-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)] sm:text-3xl">
                 How great is our <span className="text-brand-light">God</span>
               </h3>
               <p className="text-xs text-white/60">— Worship — How Great Is Our God</p>
             </div>
-            <div className="absolute bottom-0 inset-x-0 flex items-center justify-between bg-black/30 px-3 py-1.5 backdrop-blur">
+            <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-black/30 px-3 py-1.5 backdrop-blur">
               <span className="flex items-center gap-1 text-[9px] text-white/45">
                 <Smartphone size={10} /> Remote ready
               </span>
