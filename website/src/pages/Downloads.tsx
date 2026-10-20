@@ -131,6 +131,26 @@ export default function Downloads() {
           )}
         </div>
 
+        {/* Install steps */}
+        <div className="mt-8 grid gap-4 sm:grid-cols-3">
+          {[
+            { n: '1', t: 'Download the installer', d: 'One .exe file, around 100 MB. No account, no email wall.' },
+            { n: '2', t: 'Run it & install', d: 'Accept the defaults — it installs in seconds on Windows 10 or later.' },
+            { n: '3', t: 'Launch & go live', d: 'Pick your displays, load a service plan and press play.' },
+          ].map((s) => (
+            <div
+              key={s.n}
+              className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 transition-all duration-300 hover:border-brand/30"
+            >
+              <span className="font-display flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-brand to-[#47bfff] text-sm font-bold text-white">
+                {s.n}
+              </span>
+              <h3 className="font-display mt-3 text-sm font-semibold text-white">{s.t}</h3>
+              <p className="mt-1.5 text-sm leading-relaxed text-white/45">{s.d}</p>
+            </div>
+          ))}
+        </div>
+
         {/* Requirements + FAQ */}
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-6 transition-all duration-300 hover:border-brand/30">

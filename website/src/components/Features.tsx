@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import SectionHeading from './SectionHeading'
+import Reveal from './Reveal'
 
 interface BentoCard {
   icon: LucideIcon
@@ -123,31 +124,28 @@ export default function Features() {
 
         <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {bento.map((f, i) => (
-            <article
-              key={f.title}
-              className={`group animate-fade-up glass relative flex flex-col rounded-3xl border border-white/10 p-6 transition-all duration-300 hover:-translate-y-1 hover:border-brand/40 hover:shadow-[0_28px_60px_-35px_rgba(124,106,247,1)] ${f.span}`}
-              style={{ animationDelay: `${Math.min(i, 7) * 60}ms` }}
-            >
-              <span
-                className={`flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br ${f.accent} text-white shadow-[0_12px_26px_-12px_rgba(0,0,0,0.9)] ring-1 ring-white/15 transition-transform duration-300 group-hover:scale-110`}
-              >
-                <f.icon size={20} />
-              </span>
-              <h3 className="font-display mt-4 text-base font-semibold text-white">{f.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-white/45">{f.body}</p>
-              {f.visual === 'lyrics' && <MiniLyrics />}
-            </article>
+            <Reveal key={f.title} delay={Math.min(i, 7) * 70} className={`h-full ${f.span}`}>
+              <article className="group glass relative flex h-full flex-col rounded-3xl border border-white/10 p-6 transition-all duration-300 hover:-translate-y-1 hover:border-brand/40 hover:shadow-[0_28px_60px_-35px_rgba(124,106,247,1)]">
+                <span
+                  className={`flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br ${f.accent} text-white shadow-[0_12px_26px_-12px_rgba(0,0,0,0.9)] ring-1 ring-white/15 transition-transform duration-300 group-hover:scale-110`}
+                >
+                  <f.icon size={20} />
+                </span>
+                <h3 className="font-display mt-4 text-base font-semibold text-white">{f.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-white/45">{f.body}</p>
+                {f.visual === 'lyrics' && <MiniLyrics />}
+              </article>
+            </Reveal>
           ))}
         </div>
 
         <div className="mt-6 flex flex-wrap justify-center gap-3">
-          {chips.map((c) => (
-            <span
-              key={c.label}
-              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-white/55 transition-all hover:border-brand/40 hover:text-white"
-            >
-              <c.icon size={14} className="text-brand-light" /> {c.label}
-            </span>
+          {chips.map((c, i) => (
+            <Reveal key={c.label} delay={i * 70}>
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-white/55 transition-all hover:border-brand/40 hover:text-white">
+                <c.icon size={14} className="text-brand-light" /> {c.label}
+              </span>
+            </Reveal>
           ))}
         </div>
       </div>

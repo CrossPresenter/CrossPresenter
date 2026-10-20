@@ -10,16 +10,18 @@ const serviceItems = [
 
 export default function AppMockup() {
   return (
-    <div className="relative animate-float">
+    <div className="relative animate-float pb-8">
       <div className="absolute -inset-8 rounded-[2rem] bg-brand/20 blur-3xl" aria-hidden />
-      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-surface shadow-2xl shadow-black/50 transition-transform duration-500 ease-out lg:[transform:perspective(1400px)_rotateY(-8deg)_rotateX(3deg)] lg:hover:[transform:perspective(1400px)_rotateY(0deg)_rotateX(0deg)]">
+
+      {/* Control window */}
+      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-surface shadow-2xl shadow-black/50 transition-transform duration-500 ease-out lg:[transform:perspective(1600px)_rotateY(-7deg)_rotateX(2deg)] lg:hover:[transform:perspective(1600px)_rotateY(0deg)_rotateX(0deg)]">
         {/* Title bar */}
         <div className="flex items-center gap-2 border-b border-white/5 bg-surface-light px-4 py-3">
           <span className="h-3 w-3 rounded-full bg-[#ff5f57]" />
           <span className="h-3 w-3 rounded-full bg-[#febc2e]" />
           <span className="h-3 w-3 rounded-full bg-[#28c840]" />
           <span className="ml-3 hidden rounded-md bg-black/30 px-3 py-1 text-[10px] text-white/40 sm:block">
-            CrossPresenter — Presenter
+            CrossPresenter — Control window
           </span>
           <span className="ml-auto hidden items-center gap-1.5 rounded-md bg-[#f43f5e]/15 px-2 py-1 text-[9px] font-semibold tracking-wider text-[#fb7185] ring-1 ring-[#f43f5e]/30 sm:flex">
             <span className="animate-pulse-dot h-1.5 w-1.5 rounded-full bg-[#f43f5e]" /> LIVE
@@ -79,8 +81,7 @@ export default function AppMockup() {
             <div
               className="absolute inset-0"
               style={{
-                background:
-                  'radial-gradient(120% 120% at 20% 0%, #4a37a0 0%, #1c1550 45%, #0d0b24 100%)',
+                background: 'radial-gradient(120% 120% at 20% 0%, #4a37a0 0%, #1c1550 45%, #0d0b24 100%)',
               }}
             />
             <div
@@ -108,6 +109,24 @@ export default function AppMockup() {
               </span>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Floating live-output window (what the congregation sees) */}
+      <div className="absolute -bottom-2 -right-3 hidden w-56 rotate-[2.5deg] overflow-hidden rounded-xl border border-white/15 bg-surface shadow-[0_34px_70px_-30px_rgba(0,0,0,1)] transition-transform duration-500 hover:rotate-0 md:block lg:-right-8 lg:w-64">
+        <div className="flex items-center gap-2 border-b border-white/5 bg-surface-light px-3 py-2">
+          <span className="h-2 w-2 rounded-full bg-[#28c840]" />
+          <span className="text-[9px] text-white/45">Live output — Display 2</span>
+          <span className="ml-auto text-[8px] text-white/30">1920×1080</span>
+        </div>
+        <div
+          className="flex h-28 flex-col items-center justify-center gap-1 px-4 text-center lg:h-32"
+          style={{ background: 'radial-gradient(120% 130% at 30% 0%, #4a37a0 0%, #171243 55%, #0a0820 100%)' }}
+        >
+          <p className="font-display text-base font-bold leading-tight text-white lg:text-lg">
+            How great is our God
+          </p>
+          <p className="text-[8px] font-semibold uppercase tracking-[0.3em] text-brand-light">Verse 2 of 4</p>
         </div>
       </div>
     </div>
