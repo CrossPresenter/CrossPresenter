@@ -56,6 +56,9 @@ export function windowsSetupAsset(release?: Release | null): ReleaseAsset | unde
   return firstMatch(release, /\.exe$/i)
 }
 
+/** Name used by the downloads page for the Windows installer. */
+export const windowsAsset = windowsSetupAsset
+
 export function windowsPortableAsset(release?: Release | null): ReleaseAsset | undefined {
   return packageAssets(release).find(
     (a) => /\.zip$/i.test(a.name) && !/mac|darwin|linux|appimage/i.test(a.name),
