@@ -21,7 +21,9 @@ jobs:
         with:
           workspaces: CrossPresenter-Windows_11/src-tauri
       - run: npm ci
-      - run: npm run bundle
+      # The updater signing key is deliberately kept off CI; releases are
+      # built locally. This override keeps the verification build unsigned.
+      - run: npm run bundle -- --config src-tauri/tauri.ci.conf.json
       - uses: actions/upload-artifact@v4
         with:
           name: crosspresenter-windows
