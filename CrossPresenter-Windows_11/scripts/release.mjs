@@ -173,6 +173,7 @@ if (!fs.existsSync(passwordPath)) {
 }
 
 const password = fs.readFileSync(passwordPath, "utf8").trim();
+const privateKey = fs.readFileSync(keyPath, "utf8").trim();
 
 // ---------------------------------------------------------------------------
 // Version bump
@@ -210,6 +211,7 @@ const build = spawnSync(
     shell: process.platform === "win32",
     env: {
       ...process.env,
+      TAURI_SIGNING_PRIVATE_KEY: privateKey,
       TAURI_SIGNING_PRIVATE_KEY_PATH: keyPath,
       TAURI_SIGNING_PRIVATE_KEY_PASSWORD: password,
     },
