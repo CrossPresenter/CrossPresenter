@@ -17,12 +17,15 @@ import { BibleModal } from "./components/bible/BibleModal";
 import { SettingsModal } from "./components/settings/SettingsModal";
 import { Toasts } from "./components/common/Toasts";
 import { UpdatePrompt } from "./components/updates/UpdatePrompt";
+import { useRemoteBridge } from "./lib/remoteBridge";
 
 export function App() {
   const view = useStore((s) => s.view);
   const refreshMonitors = useStore((s) => s.refreshMonitors);
   const bibleOpen = useStore((s) => s.bibleOpen);
   const settingsOpen = useStore((s) => s.settingsOpen);
+
+  useRemoteBridge();
 
   useEffect(() => {
     refreshMonitors();

@@ -4,6 +4,8 @@
  * always visible regardless of which view is active.
  */
 
+import { useEffect } from "react";
+
 import { selectIsLive, useStore, type ViewName } from "../../state/store";
 import { SettingsIcon } from "../common/Icons";
 
@@ -22,6 +24,17 @@ export function TopBar() {
   const goLive = useStore((s) => s.goLive);
   const stopLive = useStore((s) => s.stopLive);
   const setSettingsOpen = useStore((s) => s.setSettingsOpen);
+  const monitors = useStore((s) => s.monitors);
+  const selectedMonitorId = useStore((s) => s.selectedMonitorId);
+  const setSelectedMonitorId = useStore((s) => s.setSelectedMonitorId);
+  const refreshMonitors = useStore((s) => s.refreshMonitors);
+
+  useEffect(() => {
+    void refreshMonitors();
+  }, [refreshMonitors]);
+
+  const selectedId =
+    selectedMonitorId ?? (monitors.length > 0 ? monitors[0].id : "");
 
   return (
     <header className="flex h-11 flex-none items-center justify-between border-b border-shell-800 bg-shell-900 px-3">
@@ -46,7 +59,24 @@ export function TopBar() {
         ))}
       </nav>
 
-      <div className="flex w-56 items-center justify-end gap-3">
+      <div className="flex w-56 items-center justify-end gap-2">
+        <select
+          className="cp-btn !px-2 !py-1 text-[11px] max-w-[150px]"
+          title="Display to broadcast to"
+          value={selectedId}
+          disabled={busy != null || isLive}
+          onChange={(event) => setSelectedMonitorId(event.target.value || null)}
+        >
+          {monitors.length === 0 ? (
+            <option value="">No displays</option>
+          ) : (
+            monitors.map((monitor) => (
+              <option key={monitor.id} value={monitor.id}>
+                {monitor.name} ({monitor.width}×{monitor.height})
+              </option>
+            ))
+          )}
+        </select>
         <button
           className="cp-go-live"
           data-live={isLive}

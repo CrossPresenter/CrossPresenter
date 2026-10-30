@@ -14,6 +14,8 @@ import { useStore } from "../../state/store";
 import { useUpdates } from "../../state/updates";
 import { MonitorIcon } from "../common/Icons";
 import { Modal } from "../common/Modal";
+import { invoke } from "@tauri-apps/api/core";
+import { QRCodeSVG } from "qrcode.react";
 
 export function SettingsModal() {
   const setSettingsOpen = useStore((s) => s.setSettingsOpen);
@@ -25,11 +27,41 @@ export function SettingsModal() {
   const setTransition = useStore((s) => s.setTransition);
   const updatePhase = useUpdates((s) => s.phase);
   const checkForUpdates = useUpdates((s) => s.check);
+  const remoteInfo = useStore((s) => s.remoteInfo);
+  const remoteClients = useStore((s) => s.remoteClients);
+  const setRemoteInfo = useStore((s) => s.setRemoteInfo);
+  const setRemoteClients = useStore((s) => s.setRemoteClients);
+  const toast = useStore((s) => s.toast);
 
   useEffect(() => {
     refreshMonitors();
+    (async () => {
+      try {
+        await invoke("remote_start");
+        const info = (await invoke("remote_info")) as {
+          connected: number;
+        } & Record<string, unknown>;
+        setRemoteInfo(info as never);
+        setRemoteClients(info.connected ?? 0);
+      } catch (error) {
+        console.warn("remote server did not start", error);
+      }
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const rotateToken = async () => {
+    try {
+      const info = (await invoke("remote_regenerate_token")) as {
+        connected: number;
+      } & Record<string, unknown>;
+      setRemoteInfo(info as never);
+      setRemoteClients(info.connected ?? 0);
+      toast("success", "Pairing rotated. Rescan the QR on every phone.");
+    } catch (error) {
+      toast("error", String(error));
+    }
+  };
 
   return (
     <Modal title="Settings" onClose={() => setSettingsOpen(false)} widthClassName="max-w-md">
@@ -105,6 +137,27 @@ export function SettingsModal() {
           >
             {updatePhase === "checking" ? "Checking…" : "Check for updates"}
           </button>
+        </section>
+
+        <section className="flex flex-col gap-2 border-t border-shell-800 pt-3">
+          <span className="cp-label">Remote Control</span>
+          {remoteInfo ? (
+            <>
+              <p className="text-[11px] text-ink-500">
+                {remoteClients} phone{remoteClients === 1 ? "" : "s"} connected · port{" "}
+                {remoteInfo.port}
+              </p>
+              <div className="flex justify-center rounded-xl bg-white p-3">
+                <QRCodeSVG value={remoteInfo.pairUri} size={176} />
+              </div>
+              <p className="break-all text-[10px] text-ink-500">{remoteInfo.pairUri}</p>
+              <button className="cp-btn !px-2.5 !py-1 self-start" onClick={() => void rotateToken()}>
+                Rotate pairing token
+              </button>
+            </>
+          ) : (
+            <p className="text-[12px] text-ink-500">Starting the remote server…</p>
+          )}
         </section>
       </div>
     </Modal>

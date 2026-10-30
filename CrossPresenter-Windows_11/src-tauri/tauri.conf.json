@@ -58,7 +58,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IENCNDc1NUYwQzI5MTlDQTQKUldTa25KSEM4RlZIeTJEOWYranZreDRmODd3akVvcXoxQjZKR0FVUXZKZjdSQ0lSczRTdjU1YVgK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEM2RjBEQUI2MjkyQzk4ODAKUldTQW1Dd3B0dHJ3eHV2SDBlQzhFZ1BLSTlnb1pCM3JoU1RmTE1scWsyQ3RnN3pOS1ZvV0FmY0gK",
       "endpoints": [
         "https://github.com/CrossPresenter/CrossPresenter/releases/latest/download/latest.json"
       ],

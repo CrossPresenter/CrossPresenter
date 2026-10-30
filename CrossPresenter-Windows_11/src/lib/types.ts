@@ -277,6 +277,16 @@ export interface MonitorInfo {
   isProjecting: boolean;
 }
 
+export interface RemoteInfo {
+  running: boolean;
+  host: string;
+  port: number;
+  token: string;
+  pairUri: string;
+  addresses: string[];
+  connected: number;
+}
+
 export interface ExportReport {
   path: string;
   bytesWritten: number;

@@ -14,6 +14,7 @@ pub mod importers;
 pub mod model;
 pub mod monitors;
 pub mod pptx;
+pub mod remote;
 
 /// Build and run the desktop application.
 pub fn run() {
@@ -47,12 +48,29 @@ pub fn run() {
             bible::list_bible_translations,
             bible::get_bible_translation,
             bible::remove_bible_translation,
+            // Remote control
+            remote::remote_start,
+            remote::remote_info,
+            remote::remote_regenerate_token,
+            remote::remote_publish_state,
+            remote::remote_publish_library,
+            remote::remote_command_result,
+            remote::remote_connected_count,
         ])
         .setup(|app| {
-            // The window is created hidden so it can be fitted to the screen's
-            // work area before first paint: at common Windows scaling levels
-            // the configured logical size would otherwise put its bottom edge
-            // underneath the taskbar.
+            // Remote control server: start automatically so the phone can pair
+            // without an extra toggle. Failures are logged, not fatal.
+            app.manage(remote::RemoteManager(std::sync::Arc::new(
+                tokio::sync::Mutex::new(None),
+            )));
+            let handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                if let Err(error) = remote::remote_start(handle).await {
+                    eprintln!("remote server failed to start: {error}");
+                }
+            });
+
+            // The window is created hidden so it can be fitted...
             if let Some(window) = app.get_webview_window("main") {
                 monitors::fit_operator_window(&window);
                 window.show()?;

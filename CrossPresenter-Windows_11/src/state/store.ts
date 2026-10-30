@@ -61,6 +61,7 @@ import {
   type MonitorInfo,
   type Overlay,
   type OverlayKind,
+  type RemoteInfo,
   type ServiceItem,
   type Show,
   type Slide,
@@ -171,6 +172,8 @@ interface AppState {
   liveSlideId: string | null;
   /** Monitor ids with an open projection window. */
   liveMonitors: string[];
+  /** Display the operator wants to broadcast to (null = all detected). */
+  selectedMonitorId: string | null;
   monitors: MonitorInfo[];
   /** Browser-deck asset ids with an open operator-navigation popup. */
   openBrowserAssetIds: string[];
@@ -189,6 +192,10 @@ interface AppState {
   settingsOpen: boolean;
   bibleOpen: boolean;
   bibleTranslations: BibleTranslationSummary[];
+
+  // Remote control
+  remoteInfo: RemoteInfo | null;
+  remoteClients: number;
 
   // History
   past: Show[];
@@ -254,6 +261,7 @@ interface AppActions {
   goLive: () => Promise<void>;
   stopLive: () => Promise<void>;
   toggleMonitor: (monitorId: string) => Promise<void>;
+  setSelectedMonitorId: (id: string | null) => void;
   projectSlide: (itemId: string, slideId: string) => void;
   projectMedia: (asset: MediaAsset) => void;
   projectWeb: (url: string) => void;
@@ -289,6 +297,10 @@ interface AppActions {
   setSettingsOpen: (open: boolean) => void;
   setBibleOpen: (open: boolean) => void;
   toast: (kind: Toast["kind"], message: string) => void;
+
+  // Remote control
+  setRemoteInfo: (info: RemoteInfo | null) => void;
+  setRemoteClients: (count: number) => void;
   dismissToast: (id: string) => void;
 
   // Bible module
@@ -322,6 +334,7 @@ export const useStore = create<Store>((set, get) => ({
   liveItemId: null,
   liveSlideId: null,
   liveMonitors: [],
+  selectedMonitorId: null,
   monitors: [],
   openBrowserAssetIds: [],
   transition: "fade",
@@ -336,6 +349,10 @@ export const useStore = create<Store>((set, get) => ({
   settingsOpen: false,
   bibleOpen: false,
   bibleTranslations: [],
+
+  // Remote control
+  remoteInfo: null,
+  remoteClients: 0,
 
   past: [],
   future: [],
@@ -1021,6 +1038,16 @@ export const useStore = create<Store>((set, get) => ({
       return;
     }
 
+    const selected = get().selectedMonitorId;
+    if (selected) {
+      const chosen = targets.filter((m) => m.id === selected);
+      if (chosen.length === 0) {
+        get().toast("error", "The selected display is no longer available.");
+        return;
+      }
+      targets = chosen;
+    }
+
     // Every monitor is attempted even if one fails, so a single wedged display
     // cannot leave the rest of the rig dark. Monitors that came up are still
     // tracked, which means closing live later can reach every window we created.
@@ -1085,6 +1112,8 @@ export const useStore = create<Store>((set, get) => ({
       get().toast("error", errorMessage(err));
     }
   },
+
+  setSelectedMonitorId: (id) => set({ selectedMonitorId: id }),
 
   projectSlide: (itemId, slideId) => {
     const item = get().show.items.find((i) => i.id === itemId);
@@ -1352,6 +1381,10 @@ export const useStore = create<Store>((set, get) => ({
   setUseForAllSlides: (on) => set({ useForAllSlides: on }),
   setSettingsOpen: (open) => set({ settingsOpen: open }),
   setBibleOpen: (open) => set({ bibleOpen: open }),
+
+  // Remote control
+  setRemoteInfo: (info) => set({ remoteInfo: info }),
+  setRemoteClients: (count) => set({ remoteClients: count }),
 
   toast: (kind, message) => {
     const id = nanoid(8);
