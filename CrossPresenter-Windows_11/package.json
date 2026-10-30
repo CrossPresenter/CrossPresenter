@@ -1,7 +1,7 @@
 {
   "name": "crosspresenter",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "CrossPresenter — high-performance worship presentation software",
   "type": "module",
   "scripts": {

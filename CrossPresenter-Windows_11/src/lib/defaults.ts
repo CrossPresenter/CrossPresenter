@@ -21,7 +21,7 @@ import type {
 } from "./types";
 
 export const SHOW_SCHEMA_VERSION = 2;
-export const APP_VERSION = "1.0.0";
+export const APP_VERSION = "1.0.1";
 
 /** Design-time canvas the normalised rects are authored against (16:9). */
 export const CANVAS_WIDTH = 1920;

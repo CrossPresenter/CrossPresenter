@@ -1,6 +1,6 @@
 [package]
 name = "crosspresenter"
-version = "1.0.0"
+version = "1.0.1"
 description = "CrossPresenter — high-performance worship presentation software"
 authors = ["CrossPresenter"]
 edition = "2021"
