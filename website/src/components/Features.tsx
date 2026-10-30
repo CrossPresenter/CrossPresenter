@@ -1,152 +1,101 @@
-import {
-  BookOpen,
-  Camera,
-  CalendarDays,
-  Clock,
-  Film,
-  Image,
-  Mic,
-  Monitor,
-  Radio,
-  Smartphone,
-  Type,
-  Users,
-} from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
-import SectionHeading from './SectionHeading'
+import { ArrowUpRight } from 'lucide-react'
 import Reveal from './Reveal'
+import SectionHeading from './SectionHeading'
 
-interface BentoCard {
-  icon: LucideIcon
-  title: string
-  body: string
-  accent: string
-  span: string
-  visual?: 'lyrics'
-}
-
-const bento: BentoCard[] = [
+const capabilities = [
   {
-    icon: Type,
-    title: 'Live lyrics & scripture',
-    body: 'Type or edit lyrics on the fly and pull scripture with one click — a built-in Bible with multiple translations, ready the moment you need it.',
-    accent: 'from-[#7c6af7] to-[#47bfff]',
-    span: 'sm:col-span-2',
-    visual: 'lyrics',
+    title: 'Lyrics, live',
+    body: 'Type a line and it is already on screen. No slide decks, no saving, no rebuilding between verses — just the words as they come.',
   },
   {
-    icon: Monitor,
-    title: 'Multi-view & stage output',
-    body: 'A different look for the main screens, the online audience and the stage — all driven from one control window.',
-    accent: 'from-[#10b981] to-[#22d3ee]',
-    span: 'sm:col-span-2',
+    title: 'Scripture, one click',
+    body: 'Search a reference, choose a translation and send it. Multiple English translations plus Tamil, all built in and available offline.',
   },
   {
-    icon: Film,
-    title: 'Video & YouTube backgrounds',
-    body: 'Play local clips or YouTube videos as full-screen backgrounds, synced across every machine.',
-    accent: 'from-[#f43f5e] to-[#fb923c]',
-    span: 'sm:col-span-2',
-  },
-  {
-    icon: CalendarDays,
     title: 'Service plans',
-    body: 'Songs, readings, media and notes in one clean order. Tap to go live.',
-    accent: 'from-[#22d3ee] to-[#3b82f6]',
-    span: 'sm:col-span-1',
+    body: 'Songs, readings, media and notes in the order you will actually use them. Drag to rearrange, click to put anything live.',
   },
   {
-    icon: Smartphone,
-    title: 'Remote control',
-    body: 'Advance slides from a phone or tablet over WiFi.',
-    accent: 'from-[#3b82f6] to-[#6366f1]',
-    span: 'sm:col-span-1',
+    title: 'Every display, its own view',
+    body: 'The projector, the stage tablet and the stream each get the right content — all driven from a single control window.',
   },
   {
-    icon: Radio,
-    title: 'NDI output',
-    body: 'Send output over NDI straight to your streaming computer.',
-    accent: 'from-[#f59e0b] to-[#f97316]',
-    span: 'sm:col-span-1',
+    title: 'Camera and video',
+    body: 'A webcam, a phone camera over Wi-Fi, a local clip or a YouTube video can sit behind the lyrics as a full-screen background.',
   },
   {
-    icon: Camera,
-    title: 'Camera backgrounds',
-    body: 'Use a webcam — or your phone camera over WiFi — as a live background.',
-    accent: 'from-[#a855f7] to-[#ec4899]',
-    span: 'sm:col-span-1',
-  },
-  {
-    icon: BookOpen,
-    title: 'Open source, free forever',
-    body: 'GPLv3 licensed. No subscriptions, no lock-in, no annual fees — freely given, so freely given.',
-    accent: 'from-[#22c55e] to-[#10b981]',
-    span: 'sm:col-span-2',
+    title: 'Remote and recording',
+    body: 'Advance slides from a phone on the same network. Record the output with audio when you want a copy of the service.',
   },
 ]
 
-const chips = [
-  { icon: Clock, label: 'Clocks & countdowns' },
-  { icon: Mic, label: 'Recording' },
-  { icon: Users, label: 'Built for teams' },
-  { icon: Image, label: 'Images & media' },
+const also = [
+  'NDI output',
+  'Clocks and countdowns',
+  'Images and media',
+  'Team presets',
+  'Multiple Bibles',
+  'No telemetry',
 ]
-
-function MiniLyrics() {
-  return (
-    <div className="mt-5 overflow-hidden rounded-xl border border-white/10 bg-black/30 p-4">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-brand-light">Verse 2 of 4</p>
-      <p className="font-display mt-2 text-lg font-bold leading-snug text-white">
-        How great is our <span className="text-brand-light">God</span>
-      </p>
-      <div className="mt-3 space-y-1.5" aria-hidden>
-        <span className="block h-1.5 w-3/4 rounded-full bg-white/15" />
-        <span className="block h-1.5 w-1/2 rounded-full bg-white/10" />
-      </div>
-    </div>
-  )
-}
 
 export default function Features() {
   return (
-    <section id="features" className="relative scroll-mt-24 overflow-hidden py-24 sm:py-32">
-      <div className="pointer-events-none absolute inset-0" aria-hidden>
-        <div className="absolute -top-32 right-0 h-96 w-96 rounded-full bg-brand/10 blur-3xl" />
-        <div className="absolute bottom-32 -left-32 h-80 w-80 rounded-full bg-[#47bfff]/10 blur-3xl" />
-      </div>
+    <section id="features" className="scroll-mt-24 border-t border-line py-24 sm:py-32">
+      <div className="mx-auto max-w-[88rem] px-6 lg:px-10">
+        <div className="grid gap-12 md:grid-cols-12">
+          <div className="md:col-span-4 lg:col-span-3">
+            <Reveal>
+              <SectionHeading
+                label="01 / Capabilities"
+                title={
+                  <>
+                    The whole service,
+                    <br />
+                    one window.
+                  </>
+                }
+                sub="CrossPresenter does the handful of things a Sunday morning actually needs, and does them without ceremony."
+              />
+            </Reveal>
+          </div>
 
-      <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
-        <SectionHeading
-          eyebrow="Key Features"
-          title="Everything you need to lead a service"
-          sub="Lyrics, scripture, media and live video in one fast, intuitive interface — built for volunteers, powerful enough for full production."
-        />
+          <div className="md:col-span-8 lg:col-span-8 lg:col-start-5">
+            <ul className="border-t border-line">
+              {capabilities.map((item, i) => (
+                <li key={item.title} className="border-b border-line">
+                  <Reveal delay={i * 60}>
+                    <div className="group flex items-start gap-5 py-6 transition-colors duration-200 hover:bg-ink-2/50 sm:gap-8 sm:py-7">
+                      <span className="mt-1 font-mono text-[10px] text-muted transition-colors duration-200 group-hover:text-accent">
+                        {String(i + 1).padStart(2, '0')}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-display text-xl font-medium tracking-tight text-paper transition-transform duration-300 group-hover:translate-x-1 sm:text-2xl">
+                          {item.title}
+                        </h3>
+                        <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted">{item.body}</p>
+                      </div>
+                      <ArrowUpRight
+                        size={16}
+                        strokeWidth={1.5}
+                        className="mt-1.5 shrink-0 text-muted opacity-0 transition-all duration-300 group-hover:translate-x-0.5 group-hover:text-accent group-hover:opacity-100"
+                      />
+                    </div>
+                  </Reveal>
+                </li>
+              ))}
+            </ul>
 
-        <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {bento.map((f, i) => (
-            <Reveal key={f.title} delay={Math.min(i, 7) * 70} className={`h-full ${f.span}`}>
-              <article className="group glass relative flex h-full flex-col rounded-3xl border border-white/10 p-6 transition-all duration-300 hover:-translate-y-1 hover:border-brand/40 hover:shadow-[0_28px_60px_-35px_rgba(124,106,247,1)]">
-                <span
-                  className={`flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br ${f.accent} text-white shadow-[0_12px_26px_-12px_rgba(0,0,0,0.9)] ring-1 ring-white/15 transition-transform duration-300 group-hover:scale-110`}
-                >
-                  <f.icon size={20} />
+            <p className="mt-7 font-mono text-[10px] uppercase leading-relaxed tracking-[0.18em] text-muted">
+              Also included
+              <span className="mx-3 text-line">/</span>
+              {also.map((item, i) => (
+                <span key={item}>
+                  {item}
+                  {i < also.length - 1 && <span className="mx-3 text-line">·</span>}
                 </span>
-                <h3 className="font-display mt-4 text-base font-semibold text-white">{f.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-white/45">{f.body}</p>
-                {f.visual === 'lyrics' && <MiniLyrics />}
-              </article>
-            </Reveal>
-          ))}
-        </div>
-
-        <div className="mt-6 flex flex-wrap justify-center gap-3">
-          {chips.map((c, i) => (
-            <Reveal key={c.label} delay={i * 70}>
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-white/55 transition-all hover:border-brand/40 hover:text-white">
-                <c.icon size={14} className="text-brand-light" /> {c.label}
-              </span>
-            </Reveal>
-          ))}
+              ))}
+            </p>
+          </div>
         </div>
       </div>
     </section>

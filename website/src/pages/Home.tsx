@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
-import { ArrowDown, CheckCircle2, Download, Github, MonitorPlay, Settings2, Sparkles } from 'lucide-react'
+import { ArrowDown, Download, FolderOpen, MonitorPlay } from 'lucide-react'
 import AppMockup from '../components/AppMockup'
 import DownloadCta from '../components/DownloadCta'
 import Features from '../components/Features'
+import Marquee from '../components/Marquee'
 import Reveal from '../components/Reveal'
 import ScreenShowcase from '../components/ScreenShowcase'
 import SectionHeading from '../components/SectionHeading'
-import { REPO_URL, getLatestRelease } from '../lib/releases'
+import { getLatestRelease } from '../lib/releases'
 
 interface HomeProps {
   onNavigate: (path: string) => void
@@ -15,41 +16,41 @@ interface HomeProps {
 const steps = [
   {
     icon: Download,
-    title: 'Download & install',
-    body: 'Grab the Windows installer and you are running in minutes — no sign-up, no licence key.',
+    title: 'Download and install',
+    body: 'One installer, about 100 MB. No account, no email wall, no licence key.',
   },
   {
-    icon: Settings2,
+    icon: FolderOpen,
     title: 'Plan the service',
-    body: 'Add songs, scripture, videos and notes to a service plan. Reorder everything with drag and drop.',
+    body: 'Songs, readings and media in one running order. Rearrange by dragging; nothing to import.',
   },
   {
     icon: MonitorPlay,
-    title: 'Go live on every screen',
-    body: 'Pick your displays and present. Stage view, remote control and NDI take care of the rest.',
+    title: 'Go live',
+    body: 'Choose your displays and press play. Stage view and the phone remote take over from there.',
   },
 ]
 
 const faqs = [
   {
-    q: 'Is CrossPresenter really free?',
-    a: 'Yes — completely free, forever. There is no pro tier, no trial and no subscription. The source code is published under the GNU GPL v3 so anyone can inspect, fork or improve it.',
+    q: 'Is it really free?',
+    a: 'Yes. There is no pro tier, no trial and no subscription. The source is published under GPLv3, so anyone can read it, fork it or improve it.',
   },
   {
-    q: 'Do I need an account or internet connection?',
-    a: 'No accounts and no sign-ups, and everything works fully offline once installed. Internet is only needed if you choose YouTube backgrounds or fetch a new Bible translation.',
+    q: 'Do we need internet on Sunday?',
+    a: 'No. Everything runs offline once installed. Internet is only used if you choose a YouTube background or pull a new Bible translation.',
   },
   {
-    q: 'Does it work with our projector and streaming setup?',
-    a: 'CrossPresenter outputs to any extra display connected to your PC — projectors, HDMI screens or capture cards — and includes built-in NDI output for sending the feed to a streaming computer over the network.',
+    q: 'Will it work with our projector and stream?',
+    a: 'It outputs to any extra display your PC can see — projectors, HDMI screens, capture cards — and includes NDI output for a streaming computer on the same network.',
   },
   {
-    q: 'Can volunteers learn it quickly?',
-    a: 'That is the design goal. The control window shows the current slide, the next slide and the service order, and advancing is a single click or key press. Most volunteers are comfortable within one rehearsal.',
+    q: 'Can volunteers pick it up quickly?',
+    a: 'That is the point. The control window shows the current slide, the next slide and the running order; advancing is one key or one click. Most volunteers are comfortable after a single rehearsal.',
   },
   {
-    q: 'What does it run on?',
-    a: 'Windows 10 or later (64-bit) today, with macOS and Linux builds on the roadmap. It runs comfortably on modest hardware — 2 GB RAM is enough, 4 GB recommended.',
+    q: 'What do we need to run it?',
+    a: 'Windows 10 or 11, 64-bit. 2 GB of RAM is enough and 4 GB is comfortable. A second display is optional, but it is what makes the room feel finished.',
   },
 ]
 
@@ -68,179 +69,184 @@ export default function Home({ onNavigate }: HomeProps) {
     }
   }, [])
 
-  const stats = [
-    { value: downloads === null ? '—' : downloads.toLocaleString(), label: 'Downloads so far' },
-    { value: '$0', label: 'Cost, forever' },
-    { value: 'GPLv3', label: 'Open source' },
-    { value: '0', label: 'Accounts required' },
+  const facts = [
+    { label: 'Price', value: 'Free' },
+    { label: 'Licence', value: 'GPLv3' },
+    { label: 'Runs on', value: 'Windows 10+' },
+    { label: 'Downloads', value: downloads === null ? '—' : downloads.toLocaleString() },
   ]
 
   return (
     <>
       {/* Hero */}
-      <section className="relative overflow-hidden pb-28 pt-36 sm:pb-36 sm:pt-44">
-        {/* Aurora backdrop */}
-        <div className="pointer-events-none absolute inset-0" aria-hidden>
-          <div className="animate-aurora absolute -top-56 left-1/2 h-[34rem] w-[60rem] -translate-x-1/2 rounded-full bg-brand/30 blur-3xl" />
-          <div className="animate-aurora absolute -top-24 right-[-8rem] h-96 w-96 rounded-full bg-[#47bfff]/15 blur-3xl [animation-delay:-6s]" />
-          <div className="animate-aurora absolute top-64 left-[-8rem] h-80 w-80 rounded-full bg-[#ff5fa2]/10 blur-3xl [animation-delay:-12s]" />
-        </div>
-        <div className="pointer-events-none absolute inset-0 bg-grid" aria-hidden />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-[#07070f]" aria-hidden />
+      <section className="relative overflow-hidden pb-16 pt-32 sm:pb-24 sm:pt-40">
+        <div className="mx-auto max-w-[88rem] px-6 lg:px-10">
+          <div className="grid gap-16 lg:grid-cols-12 lg:gap-8">
+            <div className="lg:col-span-7">
+              <p className="animate-reveal font-mono text-[10px] uppercase tracking-[0.24em] text-muted">
+                Church presentation software
+                <span className="mx-2 text-line">/</span>
+                <span className="text-accent">Free &amp; open source</span>
+              </p>
 
-        <div className="relative mx-auto max-w-5xl px-4 text-center sm:px-6">
-          <span
-            className="animate-fade-up inline-flex items-center gap-1.5 rounded-full border border-brand/30 bg-brand/10 px-3.5 py-1 text-xs font-medium text-brand-light backdrop-blur-sm"
-            style={{ animationDelay: '40ms' }}
-          >
-            <Sparkles size={12} /> Free &amp; open source — no subscriptions, ever
-          </span>
+              <h1 className="display mt-8 text-[clamp(3.2rem,8vw,6.8rem)] font-semibold">
+                <span className="block overflow-hidden">
+                  <span className="animate-reveal block [animation-delay:60ms]">Sunday,</span>
+                </span>
+                <span className="block overflow-hidden">
+                  <span className="animate-reveal block italic font-light text-paper/85 [animation-delay:160ms]">
+                    handled.
+                  </span>
+                </span>
+              </h1>
 
-          <h1
-            className="font-display animate-fade-up mx-auto mt-6 max-w-3xl text-4xl font-extrabold leading-[1.04] tracking-tight text-balance text-white sm:text-6xl lg:text-7xl"
-            style={{ animationDelay: '120ms' }}
-          >
-            Church presentations, <span className="text-gradient">elevated</span>
-          </h1>
+              <p className="animate-reveal mt-8 max-w-lg text-base leading-relaxed text-muted [animation-delay:260ms] sm:text-lg">
+                Lyrics, scripture, media and live video on every screen in the room — and on the stream. Built for
+                volunteers, free for any church, learned in an afternoon.
+              </p>
 
-          <p
-            className="animate-fade-up mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-white/55"
-            style={{ animationDelay: '200ms' }}
-          >
-            Lyrics, Bible, media and live video backgrounds — with multi-display output, stage views and NDI
-            streaming. One fast app for the whole service, built for the church and given freely.
-          </p>
+              <div className="animate-reveal mt-10 flex flex-col items-start gap-5 [animation-delay:340ms] sm:flex-row sm:items-center">
+                <button
+                  onClick={() => onNavigate('/downloads')}
+                  className="group inline-flex items-center gap-3 bg-accent px-7 py-4 text-sm font-semibold text-ink transition-colors duration-200 hover:bg-accent-dark"
+                >
+                  <Download
+                    size={16}
+                    strokeWidth={1.75}
+                    className="transition-transform duration-200 group-hover:translate-y-0.5"
+                  />
+                  Download for Windows
+                </button>
+                <a
+                  href="#features"
+                  className="link-line inline-flex items-center gap-2 py-2 text-sm font-medium text-paper/80 transition-colors duration-200 hover:text-paper"
+                >
+                  See what it does
+                  <ArrowDown size={15} strokeWidth={1.5} />
+                </a>
+              </div>
 
-          <div
-            className="animate-fade-up mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row"
-            style={{ animationDelay: '280ms' }}
-          >
-            <button
-              onClick={() => onNavigate('/downloads')}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand to-[#6a8dff] px-8 py-4 text-base font-semibold text-white shadow-[0_18px_45px_-18px_rgba(124,106,247,1)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_26px_60px_-20px_rgba(124,106,247,1)] active:translate-y-0 sm:w-auto"
-            >
-              <Download size={18} /> Download for Windows
-            </button>
-            <a
-              href="/#features"
-              className="glass inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-white/15 px-8 py-4 text-base font-semibold text-white/80 transition-all duration-300 hover:-translate-y-1 hover:border-white/30 hover:text-white sm:w-auto"
-            >
-              <ArrowDown size={18} /> Explore features
-            </a>
-          </div>
+              <dl className="animate-reveal mt-16 grid grid-cols-2 gap-y-6 border-t border-line pt-6 [animation-delay:420ms] sm:grid-cols-4">
+                {facts.map((fact) => (
+                  <div key={fact.label}>
+                    <dt className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted">{fact.label}</dt>
+                    <dd className="font-display mt-1.5 text-lg font-medium text-paper">{fact.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
 
-          <p className="animate-fade-up mt-7 text-sm text-white/40" style={{ animationDelay: '350ms' }}>
-            <CheckCircle2 size={14} className="mr-1.5 inline text-emerald-400" />
-            Windows 10 or later
-            <span className="mx-2 text-white/20">·</span>
-            <Github size={14} className="mr-1.5 inline" />
-            <a href={REPO_URL} target="_blank" rel="noreferrer" className="transition-colors hover:text-white">
-              GPLv3 source on GitHub
-            </a>
-          </p>
-
-          {/* Mockup */}
-          <div className="animate-fade-up mt-16" style={{ animationDelay: '420ms' }}>
-            <AppMockup />
+            <div className="animate-reveal [animation-delay:300ms] lg:col-span-5">
+              <AppMockup />
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Stats strip */}
-      <section className="relative">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6">
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-            {stats.map((s, i) => (
-              <Reveal key={s.label} delay={i * 80}>
-                <div className="glass h-full rounded-2xl border border-white/10 px-5 py-6 text-center">
-                  <p className="font-display text-2xl font-bold text-white sm:text-3xl">{s.value}</p>
-                  <p className="mt-1 text-xs font-medium uppercase tracking-wider text-white/40">{s.label}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
+      <Marquee />
 
       <Features />
+
+      {/* Statement */}
+      <section className="border-t border-line py-24 sm:py-32">
+        <div className="mx-auto max-w-[88rem] px-6 lg:px-10">
+          <div className="grid gap-12 md:grid-cols-12">
+            <div className="md:col-span-9">
+              <Reveal>
+                <p className="display text-[clamp(1.75rem,3.6vw,3.25rem)] font-medium leading-[1.12] text-paper">
+                  No subscription. No account. No licence key.{' '}
+                  <span className="text-accent">Free, forever</span> — because the work is the point, not the invoice.
+                </p>
+              </Reveal>
+            </div>
+            <div className="md:col-span-3 md:border-l md:border-line md:pl-8">
+              <Reveal delay={100}>
+                <p className="text-sm italic leading-relaxed text-muted">
+                  “Freely you have received; freely give.”
+                </p>
+                <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.2em] text-muted">Matthew 10:8</p>
+              </Reveal>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <ScreenShowcase />
 
       {/* How it works */}
-      <section className="relative overflow-hidden py-20 sm:py-28">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-px rule-gradient" aria-hidden />
-        <div className="pointer-events-none absolute left-1/2 top-24 h-72 w-[36rem] -translate-x-1/2 rounded-full bg-brand/10 blur-3xl" aria-hidden />
-        <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
-          <SectionHeading
-            eyebrow="How it works"
-            title="From download to live in three steps"
-            sub="No configuration marathons, no account setup — install it, plan the service and press go."
-          />
-          <div className="mt-14 grid gap-5 md:grid-cols-3">
-            {steps.map((s, i) => (
-              <Reveal key={s.title} delay={i * 110} className="h-full">
-                <div className="glass relative h-full rounded-3xl border border-white/10 p-7 transition-all duration-300 hover:-translate-y-1 hover:border-brand/40">
-                  <span className="font-display absolute right-6 top-5 text-4xl font-extrabold text-white/10">
-                    {i + 1}
-                  </span>
-                  <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-brand to-[#47bfff] text-white shadow-[0_12px_26px_-12px_rgba(124,106,247,0.9)]">
-                    <s.icon size={20} />
-                  </span>
-                  <h3 className="font-display mt-4 text-lg font-semibold text-white">{s.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-white/45">{s.body}</p>
+      <section className="border-t border-line py-24 sm:py-32">
+        <div className="mx-auto max-w-[88rem] px-6 lg:px-10">
+          <Reveal>
+            <SectionHeading
+              label="03 / Getting started"
+              title={
+                <>
+                  Three steps,
+                  <br />
+                  no setup marathon.
+                </>
+              }
+            />
+          </Reveal>
+
+          <div className="mt-16 grid gap-10 md:grid-cols-3 md:gap-8">
+            {steps.map((step, i) => (
+              <Reveal key={step.title} delay={i * 90}>
+                <div className="border-t border-line pt-6">
+                  <div className="flex items-baseline justify-between">
+                    <span className="font-mono text-[10px] text-accent">0{i + 1}</span>
+                    <step.icon size={18} strokeWidth={1.5} className="text-muted" />
+                  </div>
+                  <h3 className="font-display mt-8 text-xl font-medium tracking-tight text-paper">{step.title}</h3>
+                  <p className="mt-3 text-sm leading-relaxed text-muted">{step.body}</p>
                 </div>
               </Reveal>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* Mission band */}
-      <section className="relative overflow-hidden py-20 sm:py-24">
-        <div className="absolute inset-0 bg-gradient-to-br from-brand/20 via-[#0d0d1c] to-[#0a1f33]" aria-hidden />
-        <div className="absolute inset-0 bg-grid opacity-60" aria-hidden />
-        <div className="relative mx-auto max-w-4xl px-4 text-center sm:px-6">
-          <Reveal>
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-brand-light">Our mission</p>
-            <h2 className="font-display mt-4 text-2xl font-bold leading-tight tracking-tight text-white sm:text-4xl">
-              High-end presentation software, given freely to the Church
-            </h2>
-            <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-white/55">
-              Every church deserves professional presentation software — regardless of budget. CrossPresenter is
-              built by and for the church community so more of every offering can go toward the mission instead of
-              software fees.
-            </p>
-            <figure className="mx-auto mt-10 max-w-xl">
-              <blockquote className="font-display text-xl font-semibold italic leading-relaxed text-white sm:text-2xl">
-                &ldquo;Freely you have received; freely give.&rdquo;
-              </blockquote>
-              <figcaption className="mt-3 text-sm text-white/45">— Matthew 10:8</figcaption>
-            </figure>
-          </Reveal>
         </div>
       </section>
 
       {/* FAQ */}
-      <section className="relative py-20 sm:py-28">
-        <div className="mx-auto max-w-3xl px-4 sm:px-6">
-          <SectionHeading
-            eyebrow="FAQ"
-            title="Questions, answered"
-            sub="Everything you need to know before putting CrossPresenter in front of your congregation."
-          />
-          <div className="mt-12 space-y-3">
-            {faqs.map((f, i) => (
-              <Reveal key={f.q} delay={i * 60}>
-                <details className="glass group rounded-2xl border border-white/10 px-5 transition-colors open:border-brand/40">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 text-sm font-semibold text-white sm:text-base">
-                    {f.q}
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/15 text-white/50 transition-transform duration-300 group-open:rotate-45">
-                      +
-                    </span>
-                  </summary>
-                  <p className="pb-5 pr-8 text-sm leading-relaxed text-white/50">{f.a}</p>
-                </details>
+      <section className="border-t border-line py-24 sm:py-32">
+        <div className="mx-auto max-w-[88rem] px-6 lg:px-10">
+          <div className="grid gap-12 md:grid-cols-12">
+            <div className="md:col-span-4">
+              <Reveal>
+                <SectionHeading
+                  label="04 / Questions"
+                  title={
+                    <>
+                      Answers,
+                      <br />
+                      before you ask.
+                    </>
+                  }
+                  sub="If something is missing, the issue tracker on GitHub is the fastest way to reach us."
+                />
               </Reveal>
-            ))}
+            </div>
+
+            <div className="md:col-span-7 md:col-start-6">
+              <div className="border-t border-line">
+                {faqs.map((faq, i) => (
+                  <Reveal key={faq.q} delay={i * 50}>
+                    <details className="group border-b border-line">
+                      <summary className="flex cursor-pointer list-none items-baseline gap-5 py-6 transition-colors duration-200 hover:text-accent sm:gap-8">
+                        <span className="font-mono text-[10px] text-muted">0{i + 1}</span>
+                        <span className="flex-1 font-display text-base font-medium text-paper transition-colors duration-200 group-hover:text-accent sm:text-lg">
+                          {faq.q}
+                        </span>
+                        <span className="relative mt-1 h-3 w-3 shrink-0 text-muted transition-transform duration-300 group-open:rotate-45 group-open:text-accent">
+                          <span className="absolute left-0 top-1/2 h-px w-3 -translate-y-1/2 bg-current" />
+                          <span className="absolute left-1/2 top-0 h-3 w-px -translate-x-1/2 bg-current" />
+                        </span>
+                      </summary>
+                      <p className="max-w-2xl pb-7 pl-9 pr-8 text-sm leading-relaxed text-muted sm:pl-12">{faq.a}</p>
+                    </details>
+                  </Reveal>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>

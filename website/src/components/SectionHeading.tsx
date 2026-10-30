@@ -1,23 +1,18 @@
+import type { ReactNode } from 'react'
+
 interface SectionHeadingProps {
-  eyebrow: string
-  title: string
+  label: string
+  title: ReactNode
   sub?: string
-  align?: 'center' | 'left'
+  className?: string
 }
 
-export default function SectionHeading({ eyebrow, title, sub, align = 'center' }: SectionHeadingProps) {
-  const centered = align === 'center'
+export default function SectionHeading({ label, title, sub, className = '' }: SectionHeadingProps) {
   return (
-    <div className={centered ? 'mx-auto max-w-2xl text-center' : 'max-w-2xl'}>
-      <div className={`flex items-center gap-3 ${centered ? 'justify-center' : ''}`}>
-        <span className="h-px w-8 bg-gradient-to-r from-transparent to-brand/70" />
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-brand-light">{eyebrow}</p>
-        {centered && <span className="h-px w-8 bg-gradient-to-l from-transparent to-brand/70" />}
-      </div>
-      <h2 className="font-display mt-4 text-3xl font-bold leading-[1.1] tracking-tight text-white sm:text-4xl">
-        {title}
-      </h2>
-      {sub && <p className="mt-4 text-base leading-relaxed text-white/50">{sub}</p>}
+    <div className={className}>
+      <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-muted">{label}</p>
+      <h2 className="display mt-5 text-3xl font-semibold text-paper sm:text-4xl lg:text-[2.6rem]">{title}</h2>
+      {sub && <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-muted">{sub}</p>}
     </div>
   )
 }

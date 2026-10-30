@@ -1,4 +1,5 @@
-import { Apple, ArrowRight, Download, Laptop } from 'lucide-react'
+import { Apple, ArrowDown, Laptop, MonitorDown } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 
 interface DownloadButtonProps {
   label?: string
@@ -7,50 +8,45 @@ interface DownloadButtonProps {
   platform?: 'windows' | 'macos' | 'linux'
 }
 
+const platformIcons: Record<NonNullable<DownloadButtonProps['platform']>, LucideIcon> = {
+  windows: MonitorDown,
+  macos: Apple,
+  linux: Laptop,
+}
+
 export default function DownloadButton({ label, sub, href, platform = 'windows' }: DownloadButtonProps) {
-  const icons = {
-    windows: <Download size={18} />,
-    macos: <Apple size={18} />,
-    linux: <Laptop size={18} />,
-  }
   const disabled = !href
+  const Icon = platformIcons[platform]
   const Wrapper = disabled ? 'div' : 'a'
 
   return (
     <Wrapper
       {...(!disabled ? { href, target: '_blank', rel: 'noreferrer' } : {})}
-      className={`group flex w-full items-center justify-between gap-3 rounded-2xl border p-5 text-left transition-all duration-300 ${
-        disabled
-          ? 'cursor-not-allowed border-white/10 bg-white/[0.03]'
-          : 'border-white/15 bg-white/[0.05] hover:-translate-y-1 hover:border-brand/50 hover:bg-brand/10 hover:shadow-[0_22px_50px_-25px_rgba(124,106,247,1)]'
+      className={`group flex items-center justify-between gap-4 border-b border-line py-5 transition-colors duration-200 ${
+        disabled ? 'cursor-not-allowed' : 'hover:bg-ink-2/60'
       }`}
     >
-      <span className="flex items-center gap-3">
-        <span
-          className={`flex h-11 w-11 items-center justify-center rounded-2xl transition-all duration-300 ${
-            disabled
-              ? 'bg-white/5 text-white/35'
-              : 'bg-gradient-to-br from-brand to-[#6a8dff] text-white shadow-[0_12px_26px_-12px_rgba(124,106,247,1)] group-hover:scale-105'
-          }`}
-        >
-          {icons[platform]}
-        </span>
-        <span>
-          <span className={`font-display block text-base font-semibold ${disabled ? 'text-white/40' : 'text-white'}`}>
-            {label ?? 'Download for Windows'}
-          </span>
-          {sub && <span className="block text-xs text-white/50">{sub}</span>}
-        </span>
-      </span>
-      {disabled ? (
-        <span className="shrink-0 rounded-full bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white/35">
-          Soon
-        </span>
-      ) : (
-        <ArrowRight
-          size={16}
-          className="shrink-0 text-white/50 transition-all duration-300 group-hover:translate-x-1 group-hover:text-white"
+      <div className="flex items-center gap-4">
+        <Icon
+          size={18}
+          strokeWidth={1.5}
+          className={disabled ? 'text-muted/50' : 'text-muted transition-colors duration-200 group-hover:text-accent'}
         />
+        <div>
+          <span className={`font-display block text-lg font-medium ${disabled ? 'text-muted' : 'text-paper'}`}>
+            {label ?? 'Windows'}
+          </span>
+          {sub && (
+            <span className="mt-0.5 block font-mono text-[10px] uppercase tracking-[0.16em] text-muted">{sub}</span>
+          )}
+        </div>
+      </div>
+      {disabled ? (
+        <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">Soon</span>
+      ) : (
+        <span className="flex h-9 w-9 items-center justify-center border border-line text-muted transition-colors duration-200 group-hover:border-accent group-hover:text-accent">
+          <ArrowDown size={15} strokeWidth={1.5} />
+        </span>
       )}
     </Wrapper>
   )

@@ -8,16 +8,15 @@ export default function App() {
   const { route, navigate } = useRoute()
 
   return (
-    <div className="min-h-screen bg-[#07070f] text-white">
+    <div className="min-h-screen bg-ink text-paper">
       <a
         href="#main"
-        className="sr-only z-[100] rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white focus:not-sr-only focus:absolute focus:left-4 focus:top-4"
+        className="sr-only z-[100] bg-accent px-4 py-2 text-sm font-semibold text-ink focus:not-sr-only focus:absolute focus:left-4 focus:top-4"
       >
         Skip to content
       </a>
-      <div className="grain pointer-events-none fixed inset-0 z-40 opacity-[0.04]" aria-hidden />
       <Nav onNavigate={navigate} active={route} />
-      <div key={route} id="main" className="animate-fade-up">
+      <div key={route} id="main" className="animate-reveal">
         {route === 'downloads' ? <Downloads /> : <Home onNavigate={navigate} />}
       </div>
       <Footer onNavigate={navigate} />

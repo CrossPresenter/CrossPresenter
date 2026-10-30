@@ -8,8 +8,8 @@ interface RevealProps {
 }
 
 /**
- * Reveals its children with a fade-up as soon as they scroll into view.
- * Falls back to instant visibility when IntersectionObserver is unavailable.
+ * Fades content up as it enters the viewport. Falls back to instant
+ * visibility when IntersectionObserver is unavailable.
  */
 export default function Reveal({ children, delay = 0, className = '' }: RevealProps) {
   const ref = useRef<HTMLDivElement | null>(null)
@@ -30,7 +30,7 @@ export default function Reveal({ children, delay = 0, className = '' }: RevealPr
           }
         }
       },
-      { threshold: 0.12, rootMargin: '0px 0px -40px 0px' },
+      { threshold: 0.1, rootMargin: '0px 0px -60px 0px' },
     )
     io.observe(el)
     return () => io.disconnect()
@@ -39,8 +39,8 @@ export default function Reveal({ children, delay = 0, className = '' }: RevealPr
   return (
     <div
       ref={ref}
-      className={`transition-all duration-700 ease-out ${
-        visible ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'
+      className={`transition-[opacity,transform] duration-700 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] ${
+        visible ? 'translate-y-0 opacity-100' : 'translate-y-5 opacity-0'
       } ${className}`}
       style={{ transitionDelay: `${delay}ms` }}
     >
