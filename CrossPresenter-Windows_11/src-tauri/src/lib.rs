@@ -6,6 +6,8 @@
 //! keeps the operator UI pinned at display refresh rate while a
 //! multi-thousand-song import runs.
 
+use tauri::Manager;
+
 pub mod archive;
 pub mod bible;
 pub mod importers;
@@ -19,6 +21,8 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
             // Monitors + projection
             monitors::list_monitors,
@@ -34,8 +38,9 @@ pub fn run() {
             archive::import_show,
             // Song import engine
             importers::import_songs,
+            importers::list_song_files,
             importers::list_supported_song_formats,
-            // PPTX text extraction
+            // PPTX import (text, geometry, images)
             pptx::extract_pptx_slides,
             // Bible module
             bible::import_bible_translation,
@@ -43,6 +48,17 @@ pub fn run() {
             bible::get_bible_translation,
             bible::remove_bible_translation,
         ])
+        .setup(|app| {
+            // The window is created hidden so it can be fitted to the screen's
+            // work area before first paint: at common Windows scaling levels
+            // the configured logical size would otherwise put its bottom edge
+            // underneath the taskbar.
+            if let Some(window) = app.get_webview_window("main") {
+                monitors::fit_operator_window(&window);
+                window.show()?;
+            }
+            Ok(())
+        })
         .run(tauri::generate_context!())
         .expect("error while running CrossPresenter");
 }

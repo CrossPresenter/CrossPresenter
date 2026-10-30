@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "CrossPresenter",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "identifier": "app.crosspresenter.desktop",
   "build": {
     "frontendDist": "../dist",
@@ -21,6 +21,7 @@
         "minHeight": 700,
         "resizable": true,
         "fullscreen": false,
+        "visible": false,
         "center": true,
         "decorations": true,
         "dragDropEnabled": true,
@@ -37,6 +38,7 @@
   },
   "bundle": {
     "active": true,
+    "createUpdaterArtifacts": true,
     "targets": ["nsis", "msi"],
     "icon": [
       "icons/32x32.png",
@@ -53,5 +55,16 @@
         "role": "Editor"
       }
     ]
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IENCNDc1NUYwQzI5MTlDQTQKUldTa25KSEM4RlZIeTJEOWYranZreDRmODd3akVvcXoxQjZKR0FVUXZKZjdSQ0lSczRTdjU1YVgK",
+      "endpoints": [
+        "https://github.com/CrossPresenter/CrossPresenter/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }

@@ -5,6 +5,7 @@
  * is on screen.
  */
 
+import { useDroppable } from "@dnd-kit/core";
 import { useShallow } from "zustand/react/shallow";
 
 import { selectActiveItem, selectActiveSlides, useStore } from "../../state/store";
@@ -19,8 +20,18 @@ export function SlideGrid() {
   const projectWeb = useStore((s) => s.projectWeb);
   const addSlide = useStore((s) => s.addSlide);
 
+  // Drop target for assets dragged out of the Media Pool — see MainView.
+  const { setNodeRef, isOver } = useDroppable({
+    id: "slide-grid",
+    data: { type: "slide-grid" },
+  });
+
   return (
-    <div className="flex flex-1 flex-col overflow-hidden">
+    <div
+      ref={setNodeRef}
+      data-over={isOver}
+      className="relative flex flex-1 flex-col overflow-hidden ring-inset transition-shadow data-[over=true]:ring-2 data-[over=true]:ring-accent-500/70"
+    >
       <div className="cp-panel-header flex items-center justify-between">
         <span className="truncate">{activeItem ? activeItem.title : "Slides"}</span>
         {activeItem && activeItem.kind !== "web" && (
@@ -35,7 +46,9 @@ export function SlideGrid() {
       </div>
 
       <div className="flex-1 overflow-y-auto p-3">
-        {!activeItem && <EmptyState text="Select an item in the Service Order to see its slides." />}
+        {!activeItem && (
+          <EmptyState text="Select an item in the Service Order — or drop an image, background, graphic or URL here to add it as a slide." />
+        )}
 
         {activeItem?.kind === "web" && (
           <WebItemCard

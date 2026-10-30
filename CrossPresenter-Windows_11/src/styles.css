@@ -428,3 +428,22 @@
 .cp-live-root * {
   cursor: none !important;
 }
+
+/* Overlay ticker ---------------------------------------------------------- */
+/*
+ * The scrolling message strip. Kept in plain CSS rather than a React animation
+ * loop so every projection window animates on the compositor thread and stays
+ * smooth while the operator UI is busy importing.
+ */
+@keyframes cp-ticker {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+.cp-ticker {
+  animation: cp-ticker 18s linear infinite;
+  will-change: transform;
+}

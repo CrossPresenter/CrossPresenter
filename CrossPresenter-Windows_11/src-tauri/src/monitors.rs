@@ -7,14 +7,15 @@
 //! onto the house screen.
 //!
 //! Live windows are borderless, undecorated, always-on-top webviews positioned
-//! at the target monitor's physical origin. They share the SPA bundle with the
-//! operator window and identify their role from the window label prefix, which
-//! avoids a second HTML entry point and keeps first paint on the GPU path.
+//! over the target monitor's work area (the panel minus the taskbar and other
+//! reserved edges). They share the SPA bundle with the operator window and
+//! identify their role from the window label prefix, which avoids a second HTML
+//! entry point and keeps first paint on the GPU path.
 
 use serde::{Deserialize, Serialize};
 use tauri::{
     AppHandle, LogicalSize, Manager, Monitor, PhysicalPosition, PhysicalSize, WebviewUrl,
-    WebviewWindowBuilder,
+    WebviewWindow, WebviewWindowBuilder,
 };
 
 /// Window label prefix for projection outputs. The frontend matches on this to
@@ -136,8 +137,116 @@ fn find_monitor(app: &AppHandle, id: &str) -> Result<(PhysicalPosition<i32>, Phy
         .ok_or_else(|| format!("display '{id}' is no longer attached"))
 }
 
-/// Project the live canvas onto a secondary display as a borderless
-/// fullscreen window.
+/// The usable area of the display at `pos`/`size` — the panel minus any
+/// reserved edges such as the taskbar.
+///
+/// A true Windows fullscreen window always paints over a transparent taskbar.
+/// Sizing a borderless window to this rectangle keeps the audience canvas
+/// above the taskbar's top edge instead of underneath it, for any taskbar
+/// position (top, bottom, left or right).
+#[cfg(target_os = "windows")]
+fn monitor_work_area(
+    pos: PhysicalPosition<i32>,
+    size: PhysicalSize<u32>,
+) -> Option<(PhysicalPosition<i32>, PhysicalSize<u32>)> {
+    use windows::Win32::Foundation::{POINT, RECT};
+    use windows::Win32::Graphics::Gdi::{
+        GetMonitorInfoW, MonitorFromPoint, MONITORINFO, MONITOR_DEFAULTTONEAREST,
+    };
+
+    // The display containing the panel's centre is the one we want, even when
+    // two panels overlap or sit at negative coordinates.
+    let centre = POINT {
+        x: pos.x.saturating_add(size.width as i32 / 2),
+        y: pos.y.saturating_add(size.height as i32 / 2),
+    };
+
+    unsafe {
+        let monitor = MonitorFromPoint(centre, MONITOR_DEFAULTTONEAREST);
+        let mut info = MONITORINFO {
+            cbSize: std::mem::size_of::<MONITORINFO>() as u32,
+            rcMonitor: RECT { left: 0, top: 0, right: 0, bottom: 0 },
+            rcWork: RECT { left: 0, top: 0, right: 0, bottom: 0 },
+            dwFlags: 0,
+        };
+        if !GetMonitorInfoW(monitor, &mut info).as_bool() {
+            return None;
+        }
+        let width = info.rcWork.right.saturating_sub(info.rcWork.left) as u32;
+        let height = info.rcWork.bottom.saturating_sub(info.rcWork.top) as u32;
+        if width == 0 || height == 0 {
+            return None;
+        }
+        Some((
+            PhysicalPosition::new(info.rcWork.left, info.rcWork.top),
+            PhysicalSize::new(width, height),
+        ))
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+fn monitor_work_area(
+    pos: PhysicalPosition<i32>,
+    size: PhysicalSize<u32>,
+) -> Option<(PhysicalPosition<i32>, PhysicalSize<u32>)> {
+    Some((pos, size))
+}
+
+/// Keep the operator window inside the display's usable area.
+///
+/// The window is configured at a fixed size in *logical* pixels (1600×980). On
+/// a 1080p panel at 125–150% scaling — or on a 768p panel — that is physically
+/// larger than the screen, so the bottom of the window, including its bottom
+/// bar, is pushed underneath the taskbar. Shrink only when it does not fit,
+/// lower the minimum size to match the work area (so Windows can still
+/// maximise the window at high scaling) and re-centre it above the taskbar.
+pub fn fit_operator_window(window: &WebviewWindow) {
+    let monitor = window
+        .current_monitor()
+        .ok()
+        .flatten()
+        .or_else(|| window.primary_monitor().ok().flatten());
+    let Some(monitor) = monitor else { return };
+
+    let Some((work_pos, work_size)) = monitor_work_area(*monitor.position(), *monitor.size()) else {
+        return;
+    };
+
+    let (Ok(inner), Ok(outer)) = (window.inner_size(), window.outer_size()) else {
+        return;
+    };
+    // Title bar and borders sit outside the client area, so reserve room for
+    // them when fitting the window into the work area.
+    let chrome_w = outer.width.saturating_sub(inner.width);
+    let chrome_h = outer.height.saturating_sub(inner.height);
+    let max_w = work_size.width.saturating_sub(chrome_w).max(1);
+    let max_h = work_size.height.saturating_sub(chrome_h).max(1);
+
+    // A minimum size can itself be taller than the work area at high scaling
+    // (700 logical px at 150% is 1050 physical on a 1080p panel). Lower it so
+    // the OS cannot force the window back underneath the taskbar.
+    let scale = monitor.scale_factor();
+    let min_w = ((max_w as f64 / scale).floor() as u32).clamp(320, 1180);
+    let min_h = ((max_h as f64 / scale).floor() as u32).clamp(240, 700);
+    let _ = window.set_min_size(Some(LogicalSize::new(min_w as f64, min_h as f64)));
+
+    let target_w = inner.width.min(max_w);
+    let target_h = inner.height.min(max_h);
+    if target_w != inner.width || target_h != inner.height {
+        let _ = window.set_size(PhysicalSize::new(target_w, target_h));
+    }
+
+    // Centre the visual window (client area + chrome) inside the usable area,
+    // which starts above the taskbar rather than at the panel origin.
+    let outer_w = target_w + chrome_w;
+    let outer_h = target_h + chrome_h;
+    let x = work_pos.x + (work_size.width.saturating_sub(outer_w) / 2) as i32;
+    let y = work_pos.y + (work_size.height.saturating_sub(outer_h) / 2) as i32;
+    let _ = window.set_position(PhysicalPosition::new(x, y));
+}
+
+/// Project the live canvas onto a secondary display as a borderless window
+/// covering that display's work area.
 ///
 /// Refuses to target the primary display. If a live window already exists for
 /// this monitor it is focused rather than duplicated.
@@ -166,6 +275,10 @@ pub fn open_live_output(app: AppHandle, monitor_id: String) -> Result<String, St
     }
 
     let (pos, size) = find_monitor(&app, &monitor_id)?;
+    // Windows fullscreen always paints underneath a transparent taskbar, so
+    // project into the display's work area: the canvas then stops at the
+    // taskbar edge instead of disappearing behind it.
+    let (pos, size) = monitor_work_area(pos, size).unwrap_or((pos, size));
 
     let window = WebviewWindowBuilder::new(&app, &label, WebviewUrl::App("index.html".into()))
         .title("CrossPresenter Live")
@@ -174,8 +287,8 @@ pub fn open_live_output(app: AppHandle, monitor_id: String) -> Result<String, St
         .always_on_top(true)
         .skip_taskbar(true)
         .focused(false)
-        // Position first at physical coordinates, then size to the panel. Doing
-        // this at build time avoids a visible frame at the wrong origin.
+        // Position first at physical coordinates, then size to the work area.
+        // Doing this at build time avoids a visible frame at the wrong origin.
         .position(pos.x as f64, pos.y as f64)
         .inner_size(size.width as f64, size.height as f64)
         .visible(false)
@@ -192,10 +305,6 @@ pub fn open_live_output(app: AppHandle, monitor_id: String) -> Result<String, St
         .set_size(size)
         .map_err(|e| format!("could not size live window: {e}"))?;
 
-    // Fullscreen after placement so the compositor picks the intended monitor.
-    window
-        .set_fullscreen(true)
-        .map_err(|e| format!("could not send live window fullscreen: {e}"))?;
     // The audience must never see the operator's pointer. CSS `cursor: none`
     // covers the document; this covers the window chrome and the moment before
     // first paint.

@@ -138,6 +138,22 @@ export const BookIcon = (p: IconProps) =>
 export const BibleCrossIcon = (p: IconProps) =>
   base(p, <path d="M10 3v14M4.5 8h11" />);
 
+export const MusicIcon = (p: IconProps) =>
+  base(
+    p,
+    <>
+      <path d="M8 15.2V5.4l7.5-1.6v9.6" />
+      <circle cx="6" cy="15.4" r="2" />
+      <circle cx="13.5" cy="13.6" r="2" />
+    </>,
+  );
+
+export const FolderIcon = (p: IconProps) =>
+  base(
+    p,
+    <path d="M2.8 5.4a1.4 1.4 0 0 1 1.4-1.4h3l1.6 2h7a1.4 1.4 0 0 1 1.4 1.4v7.2a1.4 1.4 0 0 1-1.4 1.4H4.2a1.4 1.4 0 0 1-1.4-1.4V5.4z" />,
+  );
+
 export const MonitorIcon = (p: IconProps) =>
   base(p, <><rect x="2.5" y="3.5" width="15" height="10" rx="1.4" /><path d="M7 16.5h6M10 13.5v3" /></>);
 
@@ -152,3 +168,40 @@ export const AlignRightIcon = (p: IconProps) =>
 
 export const AlignJustifyIcon = (p: IconProps) =>
   base(p, <path d="M3 5h14M3 9h14M3 13h14M3 17h14" />);
+
+export const EyeIcon = (p: IconProps) =>
+  base(
+    p,
+    <>
+      <path d="M1.9 10S4.7 4.8 10 4.8 18.1 10 18.1 10 15.3 15.2 10 15.2 1.9 10 1.9 10z" />
+      <circle cx="10" cy="10" r="2.4" />
+    </>,
+  );
+
+export const EyeOffIcon = (p: IconProps) =>
+  base(
+    p,
+    <>
+      <path d="M3 3l14 14" />
+      <path d="M8.2 5.1A8.7 8.7 0 0 1 10 4.8c5.3 0 8.1 5.2 8.1 5.2a15.6 15.6 0 0 1-2.6 3.1M5.2 6.2A15.2 15.2 0 0 0 1.9 10S4.7 15.2 10 15.2a8.9 8.9 0 0 0 3.4-.7" />
+      <path d="M8.3 8.4a2.4 2.4 0 0 0 3.3 3.3" />
+    </>,
+  );
+
+export const TimerIcon = (p: IconProps) =>
+  base(
+    p,
+    <>
+      <circle cx="10" cy="11" r="6.2" />
+      <path d="M10 7.8V11l2.2 1.6M7.6 2.6h4.8" />
+    </>,
+  );
+
+export const MessageIcon = (p: IconProps) =>
+  base(
+    p,
+    <>
+      <path d="M3 4.4h14v9.4H8.6L5 17v-3.2H3V4.4z" />
+      <path d="M6.4 8h7.2M6.4 10.6h4.6" />
+    </>,
+  );

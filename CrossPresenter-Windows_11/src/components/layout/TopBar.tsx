@@ -11,6 +11,7 @@ const TABS: { id: ViewName; label: string }[] = [
   { id: "main", label: "Main" },
   { id: "edit", label: "Edit" },
   { id: "stage", label: "Stage" },
+  { id: "bible", label: "Bible" },
 ];
 
 export function TopBar() {

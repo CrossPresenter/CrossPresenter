@@ -68,6 +68,7 @@ pub fn supported_formats() -> Vec<FormatSupport> {
         f("Holyrics", &["json", "sqlite", "db"], "Library exports and SQLite databases."),
         f("Faithlife Proclaim", &["xml", "proclaim"], "Presentation XML exports."),
         f("MediaShout", &["sqlite", "db"], "MediaShout 6/7 SQLite databases."),
+        f("ProPresenter", &["pro5", "pro6"], "ProPresenter 5 charts (XML) and ProPresenter 6 documents (zipped)."),
         f("ShareFaith Presenter", &["xml", "json"], "Song exports."),
         f("WorshipTools Presenter", &["json", "xml"], "Song exports."),
         f("OpenLyrics", &["xml"], "The shared interchange format used by several apps."),
@@ -208,6 +209,7 @@ fn is_candidate(path: &Path) -> bool {
         Some(ext) => matches!(
             ext.to_ascii_lowercase().as_str(),
             "xml" | "json" | "sqlite" | "db" | "osz" | "qsp" | "fsh" | "show" | "vps" | "proclaim"
+                | "pro5" | "pro6"
         ),
     }
 }
@@ -265,6 +267,29 @@ fn read_file(path: &Path) -> Result<Vec<RawSong>, String> {
     }
 }
 
+/// Expand a mixed list of files and directories into the concrete song files
+/// they contain. Shared by the importer and the Songs-tab folder browser.
+fn collect_song_files(paths: &[String]) -> Vec<PathBuf> {
+    let mut files: Vec<PathBuf> = Vec::new();
+    for raw in paths {
+        let p = PathBuf::from(raw);
+        if p.is_dir() {
+            for entry in walkdir::WalkDir::new(&p)
+                .max_depth(8)
+                .into_iter()
+                .filter_map(Result::ok)
+            {
+                if entry.file_type().is_file() && is_candidate(entry.path()) {
+                    files.push(entry.into_path());
+                }
+            }
+        } else if p.is_file() {
+            files.push(p);
+        }
+    }
+    files
+}
+
 /// Import songs from a set of files and/or directories.
 ///
 /// Directories are walked recursively, which is how a whole OpenSong or
@@ -280,23 +305,7 @@ pub async fn import_songs(
     tauri::async_runtime::spawn_blocking(move || {
         // Expand directories into concrete files first so rayon sees a flat
         // work list and can balance across cores evenly.
-        let mut files: Vec<PathBuf> = Vec::new();
-        for raw in &paths {
-            let p = PathBuf::from(raw);
-            if p.is_dir() {
-                for entry in walkdir::WalkDir::new(&p)
-                    .max_depth(8)
-                    .into_iter()
-                    .filter_map(Result::ok)
-                {
-                    if entry.file_type().is_file() && is_candidate(entry.path()) {
-                        files.push(entry.into_path());
-                    }
-                }
-            } else if p.is_file() {
-                files.push(p);
-            }
-        }
+        let files = collect_song_files(&paths);
 
         let files_scanned = files.len();
 
@@ -354,6 +363,26 @@ pub async fn import_songs(
     })
     .await
     .map_err(|e| format!("import task failed: {e}"))?
+}
+
+/// Expand chosen folders into the song files inside them, without parsing.
+///
+/// The Songs tab uses this so picking a library folder fills the tab with one
+/// tile per song. It never adds anything to the service order — the operator
+/// decides which song to open.
+#[tauri::command]
+pub async fn list_song_files(paths: Vec<String>) -> Result<Vec<String>, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let mut files = collect_song_files(&paths);
+        files.sort();
+        files.dedup();
+        files
+            .into_iter()
+            .map(|p| p.to_string_lossy().into_owned())
+            .collect::<Vec<String>>()
+    })
+    .await
+    .map_err(|e| format!("folder scan failed: {e}"))
 }
 
 /// The format catalogue, for the import dialog.

@@ -1,26 +1,40 @@
 /**
  * A larger, scrub-friendly view of whichever deck is active in the Media
- * Pool. Deliberately not a second deck switcher — the four buttons in the
+ * Pool. Deliberately not a second deck switcher — the five buttons in the
  * sidebar are the only place a deck gets picked; this pane just reflects that
  * choice at a size actually useful for browsing.
+ *
+ * Tiles behave like their sidebar rows: click (or drag onto the slide grid)
+ * inserts, while the play badge is the explicit go-live shortcut.
  */
 
+import { useDraggable } from "@dnd-kit/core";
 import { useShallow } from "zustand/react/shallow";
 
 import type { Deck, MediaAsset } from "../../lib/types";
 import { selectDeckAssets, useStore } from "../../state/store";
-import { ExternalLinkIcon, GlobeIcon, ImageIcon, LayersIcon, PlayIcon, VideoIcon } from "../common/Icons";
+import {
+  ExternalLinkIcon,
+  GlobeIcon,
+  ImageIcon,
+  LayersIcon,
+  MusicIcon,
+  PlayIcon,
+  VideoIcon,
+} from "../common/Icons";
 
 const DECK_LABELS: Record<Deck, string> = {
   media: "Images / Videos",
   bg: "Backgrounds",
   graphics: "Graphics",
   browser: "Browser",
+  songs: "Songs",
 };
 
 export function MediaDeckViewer({ height }: { height: number }) {
   const activeDeck = useStore((s) => s.activeDeck);
   const assets = useStore(useShallow(selectDeckAssets));
+  const insertMediaIntoSlides = useStore((s) => s.insertMediaIntoSlides);
   const projectMedia = useStore((s) => s.projectMedia);
   const projectWeb = useStore((s) => s.projectWeb);
   const toggleBrowserWindow = useStore((s) => s.toggleBrowserWindow);
@@ -47,8 +61,9 @@ export function MediaDeckViewer({ height }: { height: number }) {
                 key={asset.id}
                 asset={asset}
                 isBrowserOpen={openBrowserAssetIds.includes(asset.id)}
+                onInsert={() => void insertMediaIntoSlides(asset)}
                 onProject={() => (asset.kind === "url" ? projectWeb(asset.path) : projectMedia(asset))}
-                onToggleBrowser={() => toggleBrowserWindow(asset)}
+                onToggleBrowser={() => void toggleBrowserWindow(asset)}
               />
             ))}
           </div>
@@ -58,21 +73,43 @@ export function MediaDeckViewer({ height }: { height: number }) {
   );
 }
 
+function DeckGlyph({ asset }: { asset: MediaAsset }) {
+  const className = "h-6 w-6 text-ink-500";
+  if (asset.deck === "songs") return <MusicIcon className={className} />;
+  if (asset.kind === "url") return <GlobeIcon className={className} />;
+  if (asset.kind === "video") return <VideoIcon className={className} />;
+  if (asset.kind === "presentation") return <LayersIcon className={className} />;
+  return <ImageIcon className={className} />;
+}
+
 function DeckTile({
   asset,
   isBrowserOpen,
+  onInsert,
   onProject,
   onToggleBrowser,
 }: {
   asset: MediaAsset;
   isBrowserOpen: boolean;
+  onInsert: () => void;
   onProject: () => void;
   onToggleBrowser: () => void;
 }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    // A prefix distinct from the sidebar row's id: both are mounted at once.
+    id: `deck:${asset.id}`,
+    data: { type: "media-asset", asset },
+  });
+
   return (
     <div
-      className="group flex flex-col gap-1 rounded-lg border border-shell-700 bg-shell-850 p-1 hover:border-shell-500"
-      onDoubleClick={onProject}
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      data-dragging={isDragging}
+      className="group flex cursor-grab flex-col gap-1 rounded-lg border border-shell-700 bg-shell-850 p-1 hover:border-shell-500 data-[dragging=true]:opacity-40"
+      title="Click to add to the slide grid"
+      onClick={onInsert}
     >
       <div className="relative aspect-video overflow-hidden rounded-md bg-shell-800">
         {asset.thumbnail ? (
@@ -80,15 +117,7 @@ function DeckTile({
           <img src={asset.thumbnail} alt="" className="h-full w-full object-cover" draggable={false} />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
-            {asset.kind === "url" ? (
-              <GlobeIcon className="h-6 w-6 text-ink-500" />
-            ) : asset.kind === "video" ? (
-              <VideoIcon className="h-6 w-6 text-ink-500" />
-            ) : asset.kind === "presentation" ? (
-              <LayersIcon className="h-6 w-6 text-ink-500" />
-            ) : (
-              <ImageIcon className="h-6 w-6 text-ink-500" />
-            )}
+            <DeckGlyph asset={asset} />
           </div>
         )}
         {asset.kind === "url" && (
@@ -103,18 +132,20 @@ function DeckTile({
             <ExternalLinkIcon className="h-3.5 w-3.5" />
           </button>
         )}
-        <button
-          className="cp-btn-ghost cp-btn invisible absolute right-1 top-1 !bg-black/50 !p-1 group-hover:visible"
-          title="Send to live"
-          onClick={(e) => {
-            e.stopPropagation();
-            onProject();
-          }}
-        >
-          <PlayIcon className="h-3.5 w-3.5" />
-        </button>
+        {asset.deck !== "songs" && (
+          <button
+            className="cp-btn-ghost cp-btn invisible absolute right-1 top-1 !bg-black/50 !p-1 group-hover:visible"
+            title="Send straight to live"
+            onClick={(e) => {
+              e.stopPropagation();
+              onProject();
+            }}
+          >
+            <PlayIcon className="h-3.5 w-3.5" />
+          </button>
+        )}
       </div>
-      <span className="truncate px-0.5 text-[11px] text-ink-300" title={asset.name}>
+      <span className="truncate px-0.5 text-[11px] text-ink-300" title={asset.path}>
         {asset.name}
       </span>
     </div>

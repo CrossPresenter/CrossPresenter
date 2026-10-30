@@ -29,11 +29,18 @@ enum XmlKind {
     OpenSong,
     QueleaDatabase,
     Proclaim,
+    ProPresenter,
     Unknown,
 }
 
 fn detect_kind(xml: &str) -> XmlKind {
     let head: String = xml.chars().take(2048).collect::<String>().to_lowercase();
+    // ProPresenter 5/6 store songs as <chart> elements under <charts>. The
+    // marker is distinctive and sits near the top of the document (before the
+    // templates/layouts/media blocks), so the head check is reliable.
+    if head.contains("<charts") {
+        return XmlKind::ProPresenter;
+    }
     if head.contains("<song") && head.contains("openlyrics") {
         return XmlKind::OpenLyrics;
     }
@@ -83,8 +90,9 @@ pub fn read(path: &Path) -> Result<Vec<RawSong>, String> {
         XmlKind::OpenSong => read_opensong(&xml).map(|s| vec![s]),
         XmlKind::QueleaDatabase => read_song_collection(&xml),
         XmlKind::Proclaim => read_proclaim(&xml).map(|s| vec![s]),
+        XmlKind::ProPresenter => read_propresenter(&xml),
         XmlKind::Unknown => Err(
-            "XML root element is not a recognised song format (expected OpenLyrics, OpenSong, Quelea or Proclaim).".into(),
+            "XML root element is not a recognised song format (expected OpenLyrics, OpenSong, Quelea, Proclaim or ProPresenter).".into(),
         ),
     }
 }
@@ -130,6 +138,7 @@ pub fn read_zip(path: &Path) -> Result<Vec<RawSong>, String> {
                 XmlKind::OpenSong => read_opensong(trimmed).map(|s| vec![s]),
                 XmlKind::QueleaDatabase => read_song_collection(trimmed),
                 XmlKind::Proclaim => read_proclaim(trimmed).map(|s| vec![s]),
+                XmlKind::ProPresenter => read_propresenter(trimmed),
                 XmlKind::Unknown => continue,
             }
         } else if trimmed.starts_with('{') || trimmed.starts_with('[') {
@@ -206,6 +215,18 @@ fn attr(e: &quick_xml::events::BytesStart, key: &[u8]) -> Option<String> {
     e.attributes().flatten().find(|a| a.key.as_ref() == key).map(|a| {
         String::from_utf8_lossy(a.value.as_ref()).into_owned()
     })
+}
+
+/// An attribute value with XML entities resolved. ProPresenter stores lyric
+/// bodies in an attribute where `&#10;` marks a line break, so the value must
+/// be unescaped before it can be split into slides.
+fn attr_text(e: &quick_xml::events::BytesStart, key: &[u8]) -> Option<String> {
+    for a in e.attributes().flatten() {
+        if a.key.as_ref() == key {
+            return a.unescape_value().ok().map(|v| v.into_owned());
+        }
+    }
+    None
 }
 
 // ---------------------------------------------------------------------------
@@ -598,6 +619,121 @@ fn read_proclaim(xml: &str) -> Result<RawSong, String> {
     Ok(song)
 }
 
+// ---------------------------------------------------------------------------
+// ProPresenter (5 & 6)
+// ---------------------------------------------------------------------------
+
+/// ProPresenter 5 (`.pro5`, plain XML) and ProPresenter 6 (`.pro6`, a ZIP whose
+/// `Pro6Document.xml` carries the same shape). Songs are `<chart>` elements
+/// under `<charts>`; each chart's lyrics are `<section>` nodes whose text lives
+/// in an attribute, with slides separated by blank lines (`&#10;&#10;`).
+///
+/// A single document often holds a whole set list, so every chart is returned.
+fn read_propresenter(xml: &str) -> Result<Vec<RawSong>, String> {
+    let mut reader = Reader::from_str(xml);
+    reader.config_mut().trim_text(false);
+    let mut buf = Vec::new();
+    let mut out: Vec<RawSong> = Vec::new();
+    let mut song: Option<RawSong> = None;
+
+    loop {
+        match reader.read_event_into(&mut buf) {
+            Ok(Event::Start(e)) => match e.name().as_ref() {
+                b"chart" => song = Some(propresenter_chart(&e)),
+                b"section" => {
+                    if let Some(s) = song.as_mut() {
+                        if let Some(sec) = propresenter_section(&e) {
+                            s.sections.push(sec);
+                        }
+                    }
+                }
+                _ => {}
+            },
+            // Sections are almost always self-closing: <section ... text="…"/>.
+            Ok(Event::Empty(e)) => {
+                if e.name().as_ref() == b"section" {
+                    if let Some(s) = song.as_mut() {
+                        if let Some(sec) = propresenter_section(&e) {
+                            s.sections.push(sec);
+                        }
+                    }
+                }
+            }
+            Ok(Event::End(e)) => {
+                if e.name().as_ref() == b"chart" {
+                    if let Some(s) = song.take() {
+                        // A chart with no lyrics is a media/staging placeholder,
+                        // not a song — skip it the way the other readers do.
+                        if s.sections.iter().any(|x| !x.text.trim().is_empty()) {
+                            out.push(s);
+                        }
+                    }
+                }
+            }
+            Ok(Event::Eof) => break,
+            Err(e) => return Err(format!("malformed ProPresenter XML: {e}")),
+            _ => {}
+        }
+        buf.clear();
+    }
+
+    if out.is_empty() {
+        return Err("ProPresenter document contains no charts with lyrics.".into());
+    }
+    Ok(out)
+}
+
+/// Pull the metadata off a `<chart>` element into a fresh song.
+fn propresenter_chart(e: &quick_xml::events::BytesStart) -> RawSong {
+    let artist = attr_text(e, b"artist")
+        .filter(|s| !s.trim().is_empty())
+        .or_else(|| attr_text(e, b"author"))
+        .unwrap_or_default();
+
+    let mut song = RawSong {
+        title: attr_text(e, b"name").unwrap_or_default().trim().to_string(),
+        author: artist.trim().to_string(),
+        copyright: attr_text(e, b"copyright").unwrap_or_default().trim().to_string(),
+        ccli: attr_text(e, b"ccli").unwrap_or_default().trim().to_string(),
+        key: attr_text(e, b"key").unwrap_or_default().trim().to_string(),
+        source: "ProPresenter".into(),
+        ..Default::default()
+    };
+
+    if let Some(album) = attr_text(e, b"album").filter(|s| !s.trim().is_empty()) {
+        song.themes.push(album.trim().to_string());
+    }
+    // `arrangement` is a comma-separated playback order ("Verse 1,Chorus,…");
+    // section names contain spaces, so only commas/semicolons are delimiters.
+    song.arrangement = attr_text(e, b"arrangement")
+        .unwrap_or_default()
+        .split([',', ';'])
+        .map(normalize_tag)
+        .filter(|s| !s.is_empty())
+        .collect();
+    song
+}
+
+/// Turn a `<section>` element into a lyric section, resolving `&#10;` line
+/// breaks. Returns `None` for empty placeholder sections.
+fn propresenter_section(e: &quick_xml::events::BytesStart) -> Option<Section> {
+    let text = attr_text(e, b"text")?;
+    let text = text.replace("\r\n", "\n").replace('\r', "\n");
+    let text = text.trim_matches('\n').to_string();
+    if text.trim().is_empty() {
+        return None;
+    }
+    // Prefer the human `name`; fall back to the machine `type`.
+    let label_src = attr_text(e, b"name")
+        .filter(|s| !s.trim().is_empty())
+        .or_else(|| attr_text(e, b"type"))
+        .unwrap_or_default();
+    Some(Section {
+        label: normalize_tag(&label_src),
+        text,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -704,5 +840,58 @@ line b</verse><verse type="c">hook</verse></lyrics></song>"#;
         assert_eq!(songs[0].title, "First");
         assert_eq!(songs[1].title, "Second");
         assert_eq!(songs[0].source, "Quelea");
+    }
+
+    #[test]
+    fn reads_propresenter_charts() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<document version="600">
+  <header/>
+  <charts>
+    <chart name="Amazing Grace" artist="John Newton" copyright="Public Domain" ccli="22025" key="G" arrangement="Verse 1,Chorus">
+      <lyrics>
+        <section name="Verse 1" type="verse" text="Amazing grace how sweet the sound&#10;That saved a wretch like me"/>
+        <section name="Chorus" type="chorus" text="Praise God&#10;Praise God"/>
+      </lyrics>
+    </chart>
+  </charts>
+</document>"#;
+        let songs = read_propresenter(xml).unwrap();
+        assert_eq!(songs.len(), 1);
+        let s = &songs[0];
+        assert_eq!(s.title, "Amazing Grace");
+        assert_eq!(s.author, "John Newton");
+        assert_eq!(s.ccli, "22025");
+        assert_eq!(s.key, "G");
+        assert_eq!(s.arrangement, vec!["Verse 1", "Chorus"]);
+        assert_eq!(s.sections.len(), 2);
+        assert_eq!(s.sections[0].label, "Verse 1");
+        assert_eq!(
+            s.sections[0].text,
+            "Amazing grace how sweet the sound\nThat saved a wretch like me"
+        );
+        assert_eq!(s.sections[1].label, "Chorus");
+        assert_eq!(s.source, "ProPresenter");
+    }
+
+    #[test]
+    fn propresenter_multi_chart_setlist() {
+        let xml = r#"<document><charts>
+  <chart name="One" artist="A"><lyrics><section type="verse" text="alpha"/></lyrics></chart>
+  <chart name="Two" artist="B"><lyrics><section type="chorus" text="beta"/></lyrics></chart>
+</charts></document>"#;
+        let songs = read_propresenter(xml).unwrap();
+        assert_eq!(songs.len(), 2);
+        assert_eq!(songs[0].title, "One");
+        assert_eq!(songs[1].title, "Two");
+        assert_eq!(songs[1].sections[0].label, "Chorus");
+    }
+
+    #[test]
+    fn detects_propresenter_kind() {
+        assert_eq!(
+            detect_kind(r#"<document version="600"><header/><charts><chart/></charts></document>"#),
+            XmlKind::ProPresenter
+        );
     }
 }

@@ -11,7 +11,16 @@
 
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from "../../lib/defaults";
 import { assetUrl } from "../../lib/tauri";
-import type { Background, Layer, Slide, TextLayer, TextSpan, TextStyle } from "../../lib/types";
+import type {
+  Background,
+  Layer,
+  Overlay,
+  Slide,
+  TextLayer,
+  TextSpan,
+  TextStyle,
+} from "../../lib/types";
+import { OverlayLayer } from "../live/OverlayLayer";
 
 interface SlideCanvasProps {
   slide: Slide | null;
@@ -21,6 +30,8 @@ interface SlideCanvasProps {
   textCleared?: boolean;
   backgroundCleared?: boolean;
   webUrl?: string | null;
+  /** Timers, clock, messages and logo composited above the slide. */
+  overlays?: Overlay[];
   className?: string;
   /** Renders selection outlines and forwards layer clicks — Edit view only. */
   interactive?: boolean;
@@ -40,6 +51,7 @@ export function SlideCanvas({
   textCleared = false,
   backgroundCleared = false,
   webUrl = null,
+  overlays,
   className,
   interactive = false,
   selectedLayerId,
@@ -75,6 +87,8 @@ export function SlideCanvas({
           onSelect={() => onSelectLayer?.(layer.id)}
         />
       ))}
+
+      {!black && overlays && overlays.length > 0 && <OverlayLayer overlays={overlays} />}
     </div>
   );
 }

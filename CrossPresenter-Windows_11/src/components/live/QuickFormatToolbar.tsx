@@ -42,10 +42,6 @@ export function QuickFormatToolbar() {
 
   return (
     <div className="flex flex-1 flex-col overflow-y-auto">
-      <div className="cp-panel-header">
-        <span>Quick Format</span>
-      </div>
-
       <div className="flex flex-col gap-3 p-3">
         <label className="flex items-center justify-between text-[12px] text-ink-300">
           <span>Use for all slides</span>

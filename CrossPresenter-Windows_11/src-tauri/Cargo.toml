@@ -1,6 +1,6 @@
 [package]
 name = "crosspresenter"
-version = "2.0.0"
+version = "1.0.0"
 description = "CrossPresenter — high-performance worship presentation software"
 authors = ["CrossPresenter"]
 edition = "2021"
@@ -18,6 +18,15 @@ tauri = { version = "2", features = ["protocol-asset"] }
 tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"
 tauri-plugin-opener = "2"
+
+# In-app updates: check GitHub Releases, download and install the signed
+# NSIS package, then restart into the new version.
+tauri-plugin-updater = "2"
+tauri-plugin-process = "2"
+
+# Windows work-area lookup for live-output placement (excludes the taskbar).
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.61", features = ["Win32_Foundation", "Win32_Graphics_Gdi"] }
 
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

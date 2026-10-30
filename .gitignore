@@ -38,3 +38,7 @@ ndi-addon/
 *.local
 .env
 .env.*
+
+# Updater signing keys — the private key must never be committed
+*.key
+.tauri/

@@ -11,6 +11,7 @@ import { useEffect } from "react";
 import { APP_VERSION } from "../../lib/defaults";
 import { TRANSITIONS } from "../../lib/types";
 import { useStore } from "../../state/store";
+import { useUpdates } from "../../state/updates";
 import { MonitorIcon } from "../common/Icons";
 import { Modal } from "../common/Modal";
 
@@ -22,6 +23,8 @@ export function SettingsModal() {
   const toggleMonitor = useStore((s) => s.toggleMonitor);
   const transition = useStore((s) => s.transition);
   const setTransition = useStore((s) => s.setTransition);
+  const updatePhase = useUpdates((s) => s.phase);
+  const checkForUpdates = useUpdates((s) => s.check);
 
   useEffect(() => {
     refreshMonitors();
@@ -90,9 +93,18 @@ export function SettingsModal() {
           </div>
         </section>
 
-        <section className="flex items-center justify-between border-t border-shell-800 pt-3 text-[11px] text-ink-500">
-          <span>CrossPresenter</span>
-          <span>v{APP_VERSION}</span>
+        <section className="flex items-center justify-between border-t border-shell-800 pt-3">
+          <div className="flex flex-col">
+            <span className="text-[12px] text-ink-200">Updates</span>
+            <span className="text-[11px] text-ink-500">CrossPresenter v{APP_VERSION}</span>
+          </div>
+          <button
+            className="cp-btn !px-2.5 !py-1"
+            disabled={updatePhase !== "idle"}
+            onClick={() => void checkForUpdates(true)}
+          >
+            {updatePhase === "checking" ? "Checking…" : "Check for updates"}
+          </button>
         </section>
       </div>
     </Modal>

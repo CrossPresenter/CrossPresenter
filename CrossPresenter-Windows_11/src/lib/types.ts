@@ -152,7 +152,71 @@ export interface ServiceItem {
   sourcePath: string;
 }
 
-export type Deck = "media" | "bg" | "graphics" | "browser";
+// ---------------------------------------------------------------------------
+// Overlays — the presentation-independent layer above slides
+// ---------------------------------------------------------------------------
+
+/** Nine-way anchor, matching ProPresenter's overlay placement grid. */
+export type OverlayPosition =
+  | "top-left"
+  | "top-center"
+  | "top-right"
+  | "middle-left"
+  | "middle-center"
+  | "middle-right"
+  | "bottom-left"
+  | "bottom-center"
+  | "bottom-right";
+
+export type OverlayKind = "timer" | "clock" | "message" | "logo";
+
+interface OverlayBase {
+  id: string;
+  kind: OverlayKind;
+  /** Whether the overlay is currently on air. */
+  visible: boolean;
+  position: OverlayPosition;
+}
+
+export interface TimerOverlay extends OverlayBase {
+  kind: "timer";
+  mode: "countdown" | "elapsed";
+  /** Target length for countdown mode, in milliseconds. */
+  durationMs: number;
+  /** Epoch ms of the current run, or null while paused/idle. */
+  startedAt: number | null;
+  /** Time banked by previous runs, in milliseconds. */
+  accumulatedMs: number;
+  label: string;
+}
+
+export interface ClockOverlay extends OverlayBase {
+  kind: "clock";
+  hour12: boolean;
+  showSeconds: boolean;
+}
+
+export interface MessageOverlay extends OverlayBase {
+  kind: "message";
+  text: string;
+  /** Canvas px, like every other font size in the document. */
+  fontSize: number;
+  color: string;
+  background: string;
+  /** Slide the text across the full width like a ticker. */
+  scroll: boolean;
+}
+
+export interface LogoOverlay extends OverlayBase {
+  kind: "logo";
+  src: string;
+  /** Width as a percentage of the canvas. */
+  widthPercent: number;
+}
+
+export type Overlay = TimerOverlay | ClockOverlay | MessageOverlay | LogoOverlay;
+
+export type Deck = "media" | "bg" | "graphics" | "browser" | "songs";
 export type MediaKind = "image" | "video" | "audio" | "presentation" | "url";
 
 export interface MediaAsset {
@@ -168,6 +232,16 @@ export interface MediaAsset {
   height: number;
   durationSeconds: number;
   sizeBytes: number;
+}
+
+/** Audio transport state. Audio is heard, never composited onto a projector. */
+export interface AudioPlayback {
+  assetId: string;
+  name: string;
+  path: string;
+  loop: boolean;
+  /** Epoch ms, so the transport can show how long it has been playing. */
+  startedAt: number;
 }
 
 export interface FontFace {
@@ -283,6 +357,8 @@ export interface LiveState {
   transition: Transition;
   /** URL currently streamed from the Browser deck, if any. */
   webUrl: string | null;
+  /** Timers, clock, messages and logos drawn above the slide. */
+  overlays: Overlay[];
 }
 
 export const LIVE_EVENT = "crosspresenter://live-state";
@@ -296,4 +372,5 @@ export const EMPTY_LIVE_STATE: LiveState = {
   black: false,
   transition: "fade",
   webUrl: null,
+  overlays: [],
 };

@@ -19,6 +19,7 @@ import {
   MIN_FONT_SIZE,
   defaultSongMeta,
   emptyShow,
+  newServiceItem,
   newSlide,
   newTextLayer,
 } from "../lib/defaults";
@@ -34,6 +35,7 @@ import {
   importSongs,
   listBibleTranslations,
   listProjectionTargets,
+  listSongFiles,
   openBrowserWindow,
   openLiveOutput,
   pickBibleFile,
@@ -46,8 +48,10 @@ import {
   publishLiveState,
   removeBibleTranslation,
 } from "../lib/tauri";
+import { createOverlay, overlayElapsedMs } from "../lib/overlays";
 import {
   EMPTY_LIVE_STATE,
+  type AudioPlayback,
   type Background,
   type BibleTranslationSummary,
   type Deck,
@@ -55,6 +59,8 @@ import {
   type LiveState,
   type MediaAsset,
   type MonitorInfo,
+  type Overlay,
+  type OverlayKind,
   type ServiceItem,
   type Show,
   type Slide,
@@ -77,7 +83,7 @@ export const SERVICE_PANE_MIN = 140;
 /** The deck viewer may grow to 60% of the viewport height and no further. */
 export const deckMax = (): number => Math.round(window.innerHeight * 0.6);
 
-export type ViewName = "main" | "edit" | "stage";
+export type ViewName = "main" | "edit" | "stage" | "bible";
 
 export interface Toast {
   id: string;
@@ -170,6 +176,8 @@ interface AppState {
   openBrowserAssetIds: string[];
   /** Default transition applied to newly projected slides. */
   transition: Transition;
+  /** Audio currently playing over the live output, if any. */
+  audioPlayback: AudioPlayback | null;
 
   // UI
   view: ViewName;
@@ -227,11 +235,19 @@ interface AppActions {
   addMedia: (assets: MediaAsset[]) => void;
   removeMedia: (assetId: string) => void;
   addMediaFromPicker: (deck: Deck) => Promise<void>;
+  /** Adds every supported song file under a chosen folder to the Songs deck. */
+  addSongsFromFolder: () => Promise<void>;
   addWebLink: (url: string, name?: string) => void;
   /** Opens (or closes) the interactive operator-navigation popup for a Browser-deck asset. */
   toggleBrowserWindow: (asset: MediaAsset) => Promise<void>;
   /** Turns a Graphics-deck presentation asset into a Service Order item, extracting real slide text via Rust. */
   addPresentationItem: (asset: MediaAsset) => Promise<void>;
+  /**
+   * Adds an asset to the slide deck below the workspace — never straight to
+   * air. Images/videos become a new slide on the active item; presentations and
+   * Song-deck files expand into a new Service Order item.
+   */
+  insertMediaIntoSlides: (asset: MediaAsset) => Promise<void>;
 
   // Live control
   refreshMonitors: () => Promise<void>;
@@ -250,6 +266,19 @@ interface AppActions {
   toggleClearBackground: () => void;
   clearLive: () => void;
   republishLive: () => void;
+
+  // Audio — plays in the operator window, never rendered to a projector
+  playAudioAsset: (asset: MediaAsset) => void;
+  stopAudio: () => void;
+  toggleAudioLoop: () => void;
+
+  // Overlays — timers, clock, messages, logo, layered above every slide
+  addOverlay: (kind: OverlayKind) => void;
+  updateOverlay: (id: string, patch: Partial<Overlay>) => void;
+  removeOverlay: (id: string) => void;
+  startOverlayTimer: (id: string) => void;
+  pauseOverlayTimer: (id: string) => void;
+  resetOverlayTimer: (id: string) => void;
 
   // UI
   setView: (view: ViewName) => void;
@@ -296,6 +325,7 @@ export const useStore = create<Store>((set, get) => ({
   monitors: [],
   openBrowserAssetIds: [],
   transition: "fade",
+  audioPlayback: null,
 
   view: "main",
   activeDeck: "media",
@@ -726,12 +756,44 @@ export const useStore = create<Store>((set, get) => ({
 
   addMediaFromPicker: async (deck) => {
     try {
-      const paths = deck === "graphics" ? await pickPresentations() : await pickMediaFiles();
+      const paths =
+        deck === "songs"
+          ? await pickSongFiles()
+          : deck === "graphics"
+            ? await pickPresentations()
+            : await pickMediaFiles();
       if (paths.length === 0) return;
       get().addMedia(paths.map((p) => assetFromPath(p, deck)));
       get().toast("success", `Added ${paths.length} item${paths.length === 1 ? "" : "s"}`);
     } catch (err) {
       get().toast("error", errorMessage(err));
+    }
+  },
+
+  /**
+   * Whole-library import for the Songs deck: point at a folder, walk it, and
+   * put one tile per song file in the Songs tab. Nothing is added to the
+   * service order — the operator still chooses which song to open.
+   */
+  addSongsFromFolder: async () => {
+    try {
+      const picked = await pickSongFolder();
+      if (picked.length === 0) return;
+      set({ busy: "Reading song folder…" });
+      const paths = await listSongFiles(picked);
+      if (paths.length === 0) {
+        get().toast("info", "No song files found in that folder.");
+        return;
+      }
+      get().addMedia(paths.map((p) => assetFromPath(p, "songs")));
+      get().toast(
+        "success",
+        `Added ${paths.length} song file${paths.length === 1 ? "" : "s"} to the Songs tab`,
+      );
+    } catch (err) {
+      get().toast("error", errorMessage(err));
+    } finally {
+      set({ busy: null });
     }
   },
 
@@ -782,12 +844,149 @@ export const useStore = create<Store>((set, get) => ({
       color: KIND_COLORS.presentation,
       sourcePath: asset.path,
     };
+    set({ busy: "Reading slides…" });
     try {
       item.slides = await extractPptxSlides(asset.path);
+      if (item.slides.length === 0) {
+        get().toast("error", `"${asset.name}" contains no slides CrossPresenter can read.`);
+        return;
+      }
     } catch (err) {
       get().toast("error", `Could not read slides from "${asset.name}": ${errorMessage(err)}`);
+      return;
+    } finally {
+      set({ busy: null });
     }
     get().addItems([item]);
+    // Show the new deck in the slide grid immediately — but leave it off air;
+    // going live stays an explicit click on a slide.
+    set({
+      activeItemId: item.id,
+      selectedSlideId: item.slides[0]?.id ?? null,
+      selectedLayerId: null,
+    });
+  },
+
+  insertMediaIntoSlides: async (asset) => {
+    // Songs-deck tiles are containers. Opening a single song expands it into
+    // editable service items in the order — it never touches the live output.
+    // A folder tile is different: it belongs to the Songs tab, so it expands
+    // into individual song tiles there and leaves the service order alone.
+    if (asset.deck === "songs") {
+      if (PRESENTATION_EXT.test(asset.path)) {
+        await get().addPresentationItem(asset);
+        return;
+      }
+      set({ busy: "Reading song…" });
+      try {
+        const files = await listSongFiles([asset.path]);
+        const isFolder = files.length > 1 || (files.length === 1 && files[0] !== asset.path);
+        if (isFolder) {
+          get().addMedia(files.map((p) => assetFromPath(p, "songs")));
+          get().removeMedia(asset.id);
+          set({ activeDeck: "songs" });
+          get().toast(
+            "success",
+            `Added ${files.length} song${files.length === 1 ? "" : "s"} to the Songs tab`,
+          );
+          return;
+        }
+        const report = await importSongs([asset.path]);
+        if (report.items.length === 0) {
+          const reason = report.errors[0];
+          get().toast(
+            "error",
+            reason ? `${reason.path}: ${reason.message}` : `No songs found in "${asset.name}".`,
+          );
+          return;
+        }
+        get().addItems(report.items);
+        const first = report.items[0];
+        set({
+          activeItemId: first.id,
+          selectedSlideId: first.slides[0]?.id ?? null,
+          selectedLayerId: null,
+        });
+        get().toast(
+          "success",
+          `Added ${report.items.length === 1 ? `"${first.title}"` : `${report.items.length} songs`} to the service order`,
+        );
+      } catch (err) {
+        get().toast("error", errorMessage(err));
+      } finally {
+        set({ busy: null });
+      }
+      return;
+    }
+
+    if (asset.kind === "presentation") {
+      await get().addPresentationItem(asset);
+      return;
+    }
+
+    if (asset.kind === "audio") {
+      get().playAudioAsset(asset);
+      return;
+    }
+
+    if (asset.kind === "url") {
+      const item = newServiceItem({
+        kind: "web",
+        title: asset.name,
+        sourcePath: asset.path,
+        color: KIND_COLORS.web,
+      });
+      get().addItems([item]);
+      set({ activeItemId: item.id, selectedSlideId: null, selectedLayerId: null });
+      return;
+    }
+
+    const background: Background =
+      asset.kind === "video"
+        ? { kind: "video", src: asset.path, fit: "cover", loopPlayback: true, muted: true }
+        : { kind: "image", src: asset.path, fit: "cover" };
+
+    const slide: Slide = {
+      id: nanoid(10),
+      label: asset.name,
+      layers: [],
+      background,
+      transition: get().transition,
+      notes: "",
+      groupColor: KIND_COLORS.media,
+    };
+
+    const { activeItemId, show } = get();
+    const target = activeItemId ? show.items.find((i) => i.id === activeItemId) : undefined;
+
+    // A web item has no slide lane to append to, so media starts a deck of its
+    // own rather than being silently swallowed.
+    if (!target || target.kind === "web") {
+      const item = newServiceItem({
+        kind: "media",
+        title: asset.name,
+        slides: [slide],
+        sourcePath: asset.path,
+        color: KIND_COLORS.media,
+      });
+      get().addItems([item]);
+      set({ activeItemId: item.id, selectedSlideId: slide.id, selectedLayerId: null });
+      get().toast("info", `"${asset.name}" added as a new slide deck`);
+      return;
+    }
+
+    get().pushHistory();
+    set((s) => ({
+      show: {
+        ...s.show,
+        items: s.show.items.map((i) =>
+          i.id === target.id ? { ...i, slides: [...i.slides, slide] } : i,
+        ),
+      },
+      selectedSlideId: slide.id,
+      selectedLayerId: null,
+    }));
+    get().toast("info", `"${asset.name}" added to the slide grid`);
   },
 
   // -----------------------------------------------------------------------
@@ -908,11 +1107,19 @@ export const useStore = create<Store>((set, get) => ({
         black: false,
         transition: slide.transition ?? s.transition,
         webUrl: null,
+        overlays: s.live.overlays,
       },
     }));
   },
 
   projectMedia: (asset) => {
+    // Audio has no pixels: it plays over the current slide instead of replacing
+    // it, exactly like a ProPresenter audio layer.
+    if (asset.kind === "audio") {
+      get().playAudioAsset(asset);
+      return;
+    }
+
     const background: Background =
       asset.kind === "video"
         ? { kind: "video", src: asset.path, fit: "cover", loopPlayback: true, muted: true }
@@ -941,6 +1148,7 @@ export const useStore = create<Store>((set, get) => ({
         black: false,
         transition: s.transition,
         webUrl: null,
+        overlays: s.live.overlays,
       },
     }));
   },
@@ -957,6 +1165,7 @@ export const useStore = create<Store>((set, get) => ({
         black: false,
         transition: s.transition,
         webUrl: url,
+        overlays: s.live.overlays,
       },
     })),
 
@@ -972,6 +1181,7 @@ export const useStore = create<Store>((set, get) => ({
         black: false,
         transition: slide.transition ?? s.transition,
         webUrl: null,
+        overlays: s.live.overlays,
       },
     })),
 
@@ -1014,7 +1224,10 @@ export const useStore = create<Store>((set, get) => ({
     set((s) => ({
       liveItemId: null,
       liveSlideId: null,
-      live: { ...EMPTY_LIVE_STATE, transition: s.transition },
+      // Overlays are stage furniture, not document content: clearing the screen
+      // must not silently stop the countdown or hide the logo.
+      live: { ...EMPTY_LIVE_STATE, transition: s.transition, overlays: s.live.overlays },
+      audioPlayback: null,
     })),
 
   republishLive: () => {
@@ -1032,6 +1245,83 @@ export const useStore = create<Store>((set, get) => ({
       },
     });
   },
+
+  playAudioAsset: (asset) =>
+    set((s) => ({
+      audioPlayback: {
+        assetId: asset.id,
+        name: asset.name,
+        path: asset.path,
+        // Re-clicking the same track restarts it; its loop preference survives.
+        loop: s.audioPlayback?.assetId === asset.id ? s.audioPlayback.loop : false,
+        startedAt: Date.now(),
+      },
+    })),
+
+  stopAudio: () => set({ audioPlayback: null }),
+
+  toggleAudioLoop: () =>
+    set((s) =>
+      s.audioPlayback
+        ? { audioPlayback: { ...s.audioPlayback, loop: !s.audioPlayback.loop } }
+        : {},
+    ),
+
+  // -----------------------------------------------------------------------
+  // Overlays
+  // -----------------------------------------------------------------------
+  addOverlay: (kind) =>
+    set((s) => ({
+      live: { ...s.live, overlays: [...s.live.overlays, createOverlay(kind, nanoid(8))] },
+    })),
+
+  updateOverlay: (id, patch) =>
+    set((s) => ({
+      live: {
+        ...s.live,
+        overlays: s.live.overlays.map((o) => (o.id === id ? ({ ...o, ...patch } as Overlay) : o)),
+      },
+    })),
+
+  removeOverlay: (id) =>
+    set((s) => ({
+      live: { ...s.live, overlays: s.live.overlays.filter((o) => o.id !== id) },
+    })),
+
+  startOverlayTimer: (id) =>
+    set((s) => ({
+      live: {
+        ...s.live,
+        overlays: s.live.overlays.map((o) => {
+          if (o.id !== id || o.kind !== "timer" || o.startedAt != null) return o;
+          // A finished countdown starts again from full: pressing Start on a
+          // 00:00 timer should do the obvious thing, not nothing.
+          const finished = o.mode === "countdown" && overlayElapsedMs(o, Date.now()) >= o.durationMs;
+          return { ...o, startedAt: Date.now(), accumulatedMs: finished ? 0 : o.accumulatedMs };
+        }),
+      },
+    })),
+
+  pauseOverlayTimer: (id) =>
+    set((s) => ({
+      live: {
+        ...s.live,
+        overlays: s.live.overlays.map((o) => {
+          if (o.id !== id || o.kind !== "timer" || o.startedAt == null) return o;
+          return { ...o, accumulatedMs: overlayElapsedMs(o, Date.now()), startedAt: null };
+        }),
+      },
+    })),
+
+  resetOverlayTimer: (id) =>
+    set((s) => ({
+      live: {
+        ...s.live,
+        overlays: s.live.overlays.map((o) =>
+          o.id === id && o.kind === "timer" ? { ...o, startedAt: null, accumulatedMs: 0 } : o,
+        ),
+      },
+    })),
 
   // -----------------------------------------------------------------------
   // UI
@@ -1198,7 +1488,7 @@ export const useStore = create<Store>((set, get) => ({
   },
 
   loadShow: (show) =>
-    set({
+    set((s) => ({
       show,
       past: [],
       future: [],
@@ -1208,8 +1498,11 @@ export const useStore = create<Store>((set, get) => ({
       textSelection: null,
       liveItemId: null,
       liveSlideId: null,
-      live: EMPTY_LIVE_STATE,
-    }),
+      // Opening a document does not stop the service clock, but audio belongs
+      // to the service that was just closed.
+      live: { ...EMPTY_LIVE_STATE, overlays: s.live.overlays },
+      audioPlayback: null,
+    })),
 }));
 
 // ---------------------------------------------------------------------------

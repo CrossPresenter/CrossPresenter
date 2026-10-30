@@ -98,6 +98,14 @@ export function listSupportedSongFormats(): Promise<FormatSupport[]> {
   return invoke<FormatSupport[]>("list_supported_song_formats");
 }
 
+/**
+ * Expand a chosen library folder into the concrete song files inside it.
+ * The Songs tab uses this to build tiles; nothing is parsed or queued.
+ */
+export function listSongFiles(paths: string[]): Promise<string[]> {
+  return invoke<string[]>("list_song_files", { paths });
+}
+
 // ---------------------------------------------------------------------------
 // PPTX text extraction
 // ---------------------------------------------------------------------------
@@ -140,6 +148,10 @@ const SONG_EXTENSIONS = [
   "db", "sdb", "sqlite", "sqlite3", "mdb",
   "xml", "osz", "qsp", "proclaim",
   "json", "vps", "fsh",
+  "pro5", "pro6",
+  // PowerPoint decks are imported through the same picker so the Songs tab is
+  // one place to pull in either a lyric library or a .pptx.
+  "pptx", "ppsx",
 ];
 
 const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "webp", "gif", "bmp", "tif", "tiff", "avif"];

@@ -9,14 +9,14 @@ import { useEffect } from "react";
 
 import { useStore } from "./state/store";
 import { TopBar } from "./components/layout/TopBar";
-import { LeftSidebar } from "./components/layout/LeftSidebar";
-import { CenterWorkspace } from "./components/layout/CenterWorkspace";
-import { RightPanel } from "./components/layout/RightPanel";
+import { MainView } from "./components/layout/MainView";
 import { EditView } from "./components/edit/EditView";
 import { StageView } from "./components/stage/StageView";
+import { BibleView } from "./components/bible/BibleView";
 import { BibleModal } from "./components/bible/BibleModal";
 import { SettingsModal } from "./components/settings/SettingsModal";
 import { Toasts } from "./components/common/Toasts";
+import { UpdatePrompt } from "./components/updates/UpdatePrompt";
 
 export function App() {
   const view = useStore((s) => s.view);
@@ -32,19 +32,15 @@ export function App() {
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-shell-950 text-ink-200">
       <TopBar />
 
-      {view === "main" && (
-        <div className="flex flex-1 overflow-hidden">
-          <LeftSidebar />
-          <CenterWorkspace />
-          <RightPanel />
-        </div>
-      )}
+      {view === "main" && <MainView />}
 
       {view === "edit" && <EditView />}
       {view === "stage" && <StageView />}
+      {view === "bible" && <BibleView />}
 
       {bibleOpen && <BibleModal />}
       {settingsOpen && <SettingsModal />}
+      <UpdatePrompt />
       <Toasts />
     </div>
   );

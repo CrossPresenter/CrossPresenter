@@ -62,6 +62,7 @@ export function StageView() {
                 textCleared={live.textCleared}
                 backgroundCleared={live.backgroundCleared}
                 webUrl={live.webUrl}
+                overlays={live.overlays}
                 className="h-full w-full"
               />
             </LetterboxFrame>

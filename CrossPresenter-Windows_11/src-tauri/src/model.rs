@@ -424,6 +424,9 @@ pub enum Deck {
     Graphics,
     /// "Browser" — saved URLs opened as interactive webviews.
     Browser,
+    /// "Songs" — song files (ProPresenter, EasyWorship, OpenLP, .pptx …) kept
+    /// as a library and expanded into editable service items on use.
+    Songs,
 }
 
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
