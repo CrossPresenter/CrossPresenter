@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "browser",
+  "description": "Minimal capability for the interactive browser-deck window, which loads arbitrary operator-supplied http(s) pages and must NOT inherit filesystem, dialog or opener powers.",
+  "windows": ["browser-*"],
+  "permissions": ["core:default"]
+}

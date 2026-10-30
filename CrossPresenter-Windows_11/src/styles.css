@@ -1,0 +1,449 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens. The operator UI is a dark, low-chroma surface on purpose:
+ * anything bright competes with the slide previews, which are the only thing
+ * that should pull the eye during a service.
+ */
+@theme {
+  --color-shell-950: #08090c;
+  --color-shell-900: #0d0f14;
+  --color-shell-850: #12151c;
+  --color-shell-800: #171b24;
+  --color-shell-750: #1d222d;
+  --color-shell-700: #252b38;
+  --color-shell-600: #333a4a;
+  --color-shell-500: #4a5365;
+
+  --color-ink-50: #f6f8fb;
+  --color-ink-200: #ccd3de;
+  --color-ink-400: #8b95a7;
+  --color-ink-500: #6b7488;
+
+  --color-accent-500: #3b82f6;
+  --color-accent-600: #2563eb;
+
+  /* Live/on-air red. Used for the Go Live control and the illuminated border. */
+  --color-live-500: #e11d2f;
+  --color-live-600: #c8102b;
+
+  --radius-panel: 10px;
+
+  --font-sans: Inter, "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+}
+
+@layer base {
+  * {
+    /* A presentation console should never bounce or rubber-band. */
+    overscroll-behavior: none;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+    margin: 0;
+  }
+
+  body {
+    background: var(--color-shell-950);
+    color: var(--color-ink-200);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    /* The operator never selects UI chrome; text inside editors opts back in. */
+    user-select: none;
+    -webkit-user-select: none;
+    /* Suppress the webview's native overscroll glow. */
+    overflow: hidden;
+  }
+
+  /* Keyboard focus must stay visible — operators drive this with the keyboard
+     mid-service — but the default ring is too loud on a dark surface. */
+  :focus-visible {
+    outline: 2px solid var(--color-accent-500);
+    outline-offset: 1px;
+  }
+
+  input,
+  textarea,
+  [contenteditable="true"] {
+    user-select: text;
+    -webkit-user-select: text;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-shell-700);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-shell-600);
+    background-clip: content-box;
+  }
+}
+
+@layer components {
+  /* Panels ---------------------------------------------------------------- */
+  .cp-panel {
+    background: var(--color-shell-900);
+    border: 1px solid var(--color-shell-750);
+    border-radius: var(--radius-panel);
+  }
+
+  .cp-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 7px 10px;
+    font-size: 10.5px;
+    font-weight: 650;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--color-ink-500);
+    border-bottom: 1px solid var(--color-shell-800);
+    flex: none;
+  }
+
+  /* Buttons --------------------------------------------------------------- */
+  .cp-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 7px;
+    border: 1px solid var(--color-shell-700);
+    background: var(--color-shell-800);
+    color: var(--color-ink-200);
+    font-size: 12px;
+    font-weight: 550;
+    cursor: pointer;
+    /* Only paint-cheap properties animate, so hover never costs a layout. */
+    transition: background-color 110ms ease, border-color 110ms ease, color 110ms ease;
+  }
+  .cp-btn:hover:not(:disabled) {
+    background: var(--color-shell-750);
+    border-color: var(--color-shell-600);
+    color: var(--color-ink-50);
+  }
+  .cp-btn:active:not(:disabled) {
+    background: var(--color-shell-700);
+  }
+  .cp-btn:disabled {
+    opacity: 0.42;
+    cursor: not-allowed;
+  }
+
+  .cp-btn-primary {
+    background: var(--color-accent-600);
+    border-color: var(--color-accent-500);
+    color: #fff;
+  }
+  .cp-btn-primary:hover:not(:disabled) {
+    background: var(--color-accent-500);
+    border-color: var(--color-accent-500);
+    color: #fff;
+  }
+
+  .cp-btn-ghost {
+    background: transparent;
+    border-color: transparent;
+  }
+  .cp-btn-ghost:hover:not(:disabled) {
+    background: var(--color-shell-800);
+    border-color: var(--color-shell-700);
+  }
+
+  /* Tabs ----------------------------------------------------------------- */
+  .cp-tab {
+    padding: 5px 16px;
+    border-radius: 7px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--color-ink-400);
+    background: transparent;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background-color 110ms ease, color 110ms ease;
+  }
+  .cp-tab:hover {
+    color: var(--color-ink-50);
+    background: var(--color-shell-800);
+  }
+  .cp-tab[aria-selected="true"] {
+    background: var(--color-shell-750);
+    border-color: var(--color-shell-600);
+    color: var(--color-ink-50);
+  }
+
+  /* Inputs --------------------------------------------------------------- */
+  .cp-input {
+    width: 100%;
+    padding: 5px 8px;
+    border-radius: 6px;
+    background: var(--color-shell-850);
+    border: 1px solid var(--color-shell-700);
+    color: var(--color-ink-50);
+    font-size: 12px;
+    font-family: inherit;
+  }
+  .cp-input:focus {
+    border-color: var(--color-accent-500);
+    outline: none;
+  }
+
+  .cp-label {
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--color-ink-500);
+  }
+
+  /* Range slider, styled to match the numeric twin beside it. */
+  .cp-range {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 18px;
+    background: transparent;
+    cursor: pointer;
+  }
+  .cp-range::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 999px;
+    background: var(--color-shell-700);
+  }
+  .cp-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 13px;
+    height: 13px;
+    margin-top: -4.5px;
+    border-radius: 50%;
+    background: var(--color-ink-50);
+    border: none;
+  }
+  .cp-range:focus-visible::-webkit-slider-thumb {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent-500) 55%, transparent);
+  }
+
+  /* A pressable control whose own state is the thing it displays — bold,
+     align, black/clear — rather than a momentary action. */
+  .cp-toggle-btn {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 26px;
+    padding: 0 8px;
+    border-radius: 6px;
+    border: 1px solid var(--color-shell-700);
+    background: var(--color-shell-800);
+    color: var(--color-ink-300);
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color 110ms ease, border-color 110ms ease, color 110ms ease;
+  }
+  .cp-toggle-btn:hover {
+    border-color: var(--color-shell-600);
+    color: var(--color-ink-50);
+  }
+  .cp-toggle-btn[data-selected="true"] {
+    background: var(--color-accent-600);
+    border-color: var(--color-accent-500);
+    color: #fff;
+  }
+
+  /* Splitters ------------------------------------------------------------ */
+  .cp-splitter-v {
+    flex: none;
+    width: 5px;
+    cursor: col-resize;
+    background: transparent;
+    position: relative;
+  }
+  .cp-splitter-h {
+    flex: none;
+    height: 5px;
+    cursor: row-resize;
+    background: transparent;
+    position: relative;
+  }
+  /* The visible hairline sits inside a wider invisible hit area, so the grab
+     target is comfortable without a thick visual seam. */
+  .cp-splitter-v::after,
+  .cp-splitter-h::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    background: var(--color-shell-800);
+    transition: background-color 110ms ease;
+  }
+  .cp-splitter-v::after {
+    width: 1px;
+  }
+  .cp-splitter-h::after {
+    height: 1px;
+  }
+  .cp-splitter-v:hover::after,
+  .cp-splitter-h:hover::after,
+  .cp-splitter-v[data-dragging="true"]::after,
+  .cp-splitter-h[data-dragging="true"]::after {
+    background: var(--color-accent-500);
+  }
+
+  /* Slide cards ---------------------------------------------------------- */
+  .cp-slide-card {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #000;
+    border: 2px solid var(--color-shell-700);
+    cursor: pointer;
+    /* Transform-only hover keeps the grid off the layout path entirely. */
+    transition: border-color 110ms ease, transform 110ms ease;
+  }
+  .cp-slide-card:hover {
+    border-color: var(--color-shell-500);
+  }
+  .cp-slide-card[data-selected="true"] {
+    border-color: var(--color-accent-500);
+  }
+  .cp-slide-card[data-live="true"] {
+    border-color: var(--color-live-500);
+  }
+
+  /*
+   * The live indicator: a solid illuminated border around the output preview.
+   * Static by design — no pulsing, no dots, no "On Air" caption. Peripheral
+   * motion in an operator's field of view is a distraction during a service.
+   */
+  .cp-live-frame {
+    border: 3px solid var(--color-shell-700);
+    border-radius: 8px;
+    transition: border-color 130ms ease, box-shadow 130ms ease;
+  }
+  .cp-live-frame[data-live="true"] {
+    border-color: var(--color-live-500);
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--color-live-500) 55%, transparent),
+      0 0 18px color-mix(in srgb, var(--color-live-500) 42%, transparent);
+  }
+
+  /* Toggle switch -------------------------------------------------------- */
+  .cp-switch {
+    position: relative;
+    flex: none;
+    width: 34px;
+    height: 19px;
+    border-radius: 999px;
+    background: var(--color-shell-700);
+    border: 1px solid var(--color-shell-600);
+    cursor: pointer;
+    transition: background-color 130ms ease, border-color 130ms ease;
+  }
+  .cp-switch[aria-checked="true"] {
+    background: var(--color-accent-600);
+    border-color: var(--color-accent-500);
+  }
+  .cp-switch::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: #fff;
+    transition: transform 130ms ease;
+  }
+  .cp-switch[aria-checked="true"]::after {
+    transform: translateX(15px);
+  }
+
+  /*
+   * Go Live: a fixed-geometry circular control. Width, height and border are
+   * identical in every state including :active, so the button never resizes or
+   * "breathes" under the operator's finger.
+   */
+  .cp-go-live {
+    flex: none;
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    min-height: 38px;
+    border-radius: 50%;
+    background: var(--color-live-600);
+    border: 2px solid var(--color-live-500);
+    color: #fff;
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    /* Colour only — never transform or size. */
+    transition: background-color 110ms ease;
+  }
+  .cp-go-live:hover {
+    background: var(--color-live-500);
+  }
+  .cp-go-live:active {
+    background: var(--color-live-600);
+  }
+  .cp-go-live[data-live="true"] {
+    background: var(--color-live-500);
+    box-shadow: inset 0 0 0 3px rgba(0, 0, 0, 0.28);
+  }
+
+  .cp-drag-handle {
+    cursor: grab;
+  }
+  .cp-drag-handle:active {
+    cursor: grabbing;
+  }
+}
+
+/* Live output window ------------------------------------------------------ */
+/*
+ * Applied to the document of every projection window. The operator's pointer
+ * must never appear on the house screen, so the cursor is removed at the
+ * document level in addition to the window-level flag set in Rust.
+ */
+.cp-live-root,
+.cp-live-root * {
+  cursor: none !important;
+}
+
+/* Overlay ticker ---------------------------------------------------------- */
+/*
+ * The scrolling message strip. Kept in plain CSS rather than a React animation
+ * loop so every projection window animates on the compositor thread and stays
+ * smooth while the operator UI is busy importing.
+ */
+@keyframes cp-ticker {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+.cp-ticker {
+  animation: cp-ticker 18s linear infinite;
+  will-change: transform;
+}
