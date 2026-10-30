@@ -2,9 +2,15 @@ import { useEffect, useState } from 'react'
 import { ArrowUpRight, FileText } from 'lucide-react'
 import DownloadButton from '../components/DownloadButton'
 import Reveal from '../components/Reveal'
+import { detectArch, detectOs } from '../lib/platform'
 import {
   RELEASES_URL,
   windowsAsset,
+  windowsPortableAsset,
+  macDmgAsset,
+  linuxAppImageAsset,
+  linuxDebAsset,
+  linuxTarAsset,
   getLatestRelease,
   formatBytes,
   formatDate,
@@ -21,7 +27,7 @@ const requirements = [
 const installSteps = [
   {
     title: 'Download the installer',
-    body: 'One .exe file, around 100 MB. No account, no email wall, no licence key.',
+    body: 'One installer, about 100 MB. No account, no email wall, no licence key.',
   },
   {
     title: 'Run it and install',
@@ -48,9 +54,17 @@ const quickAnswers = [
   },
 ]
 
+function osLabel(os: string): string {
+  if (os === 'windows') return 'Windows'
+  if (os === 'macos') return 'macOS'
+  if (os === 'linux') return 'Linux'
+  return 'your platform'
+}
+
 export default function Downloads() {
   const [release, setRelease] = useState<Release | null>(null)
   const [error, setError] = useState(false)
+  const [detected, setDetected] = useState<{ os: string; arch: string }>({ os: 'unknown', arch: 'unknown' })
 
   useEffect(() => {
     let cancelled = false
@@ -64,8 +78,21 @@ export default function Downloads() {
     }
   }, [])
 
-  const asset = release ? windowsAsset(release) : undefined
+  useEffect(() => {
+    setDetected({ os: detectOs(), arch: detectArch() })
+  }, [])
+
   const totalDownloads = release?.assets.reduce((sum, a) => sum + a.download_count, 0) ?? 0
+
+  const packages = [
+    { platform: 'windows' as const, label: 'Windows · installer', asset: windowsAsset(release) },
+    { platform: 'windows' as const, label: 'Windows · portable', asset: windowsPortableAsset(release) },
+    { platform: 'macos' as const, label: 'macOS · Apple Silicon', asset: macDmgAsset(release, 'arm64') },
+    { platform: 'macos' as const, label: 'macOS · Intel', asset: macDmgAsset(release, 'x64') },
+    { platform: 'linux' as const, label: 'Linux · AppImage', asset: linuxAppImageAsset(release) },
+    { platform: 'linux' as const, label: 'Linux · .deb', asset: linuxDebAsset(release) },
+    { platform: 'linux' as const, label: 'Linux · tarball', asset: linuxTarAsset(release) },
+  ]
 
   return (
     <main className="border-b border-line pb-24 pt-32 sm:pt-40">
@@ -86,8 +113,8 @@ export default function Downloads() {
               </span>
             </h1>
             <p className="animate-reveal mt-7 max-w-md text-[15px] leading-relaxed text-muted [animation-delay:200ms]">
-              The Windows build is ready now. macOS and Linux are on the roadmap. Every release is built from the same
-              public source you can read on GitHub.
+              Every platform builds from the same public source. Grab the package that matches your machine — or, if
+              you are curious, compile it yourself.
             </p>
 
             <dl className="mt-12 grid max-w-md grid-cols-2 gap-y-6 border-t border-line pt-6">
@@ -103,28 +130,44 @@ export default function Downloads() {
                 </div>
               ))}
             </dl>
+
+            {detected.os !== 'unknown' && (
+              <p className="mt-8 font-mono text-[10px] uppercase tracking-[0.18em] text-muted">
+                Detected on this device
+                <span className="mx-2 text-line">/</span>
+                <span className="text-paper/80">
+                  {osLabel(detected.os)}
+                  {detected.os === 'macos' && detected.arch !== 'unknown' ? ` · ${detected.arch}` : ''}
+                </span>
+              </p>
+            )}
           </div>
 
           <div className="md:col-span-5 md:col-start-8">
             <div className="border-t border-line">
-              <DownloadButton
-                platform="windows"
-                label="Windows"
-                sub={
-                  asset
-                    ? `${formatBytes(asset.size)} · ${asset.download_count.toLocaleString()} downloads`
-                    : error
-                      ? 'See all releases on GitHub'
-                      : 'Fetching the latest build…'
-                }
-                href={asset?.browser_download_url}
-              />
-              <DownloadButton platform="macos" label="macOS" sub="Coming soon" />
-              <DownloadButton platform="linux" label="Linux" sub="Coming soon" />
+              {packages.map((pkg) => {
+                const asset = pkg.asset
+                const sub = asset
+                  ? `${formatBytes(asset.size)} · ${asset.download_count.toLocaleString()} downloads`
+                  : error
+                    ? 'Not published yet'
+                    : 'Fetching…'
+                return (
+                  <DownloadButton
+                    key={pkg.label}
+                    platform={pkg.platform}
+                    label={pkg.label}
+                    sub={sub}
+                    href={asset?.browser_download_url}
+                    asset={asset}
+                    name={asset?.name}
+                  />
+                )
+              })}
             </div>
 
             <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 font-mono text-[9px] uppercase tracking-[0.18em] text-muted">
-              <span>Signed installer</span>
+              <span>Signed where applicable</span>
               <span>Works offline</span>
               <span>No telemetry</span>
             </div>
