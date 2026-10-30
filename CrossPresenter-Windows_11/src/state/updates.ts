@@ -15,9 +15,9 @@ import { IS_TAURI, errorMessage, windowRole } from "../lib/tauri";
 import { useStore } from "./store";
 
 /** Let the operator window settle before the first background check. */
-export const UPDATE_FIRST_CHECK_MS = 2500;
-/** Four hours is frequent enough for a church machine that stays open all day. */
-export const UPDATE_CHECK_INTERVAL_MS = 4 * 60 * 60 * 1000;
+export const UPDATE_FIRST_CHECK_MS = 5000;
+/** Check every two minutes so a newly published release is offered promptly. */
+export const UPDATE_CHECK_INTERVAL_MS = 2 * 60 * 1000;
 
 const DISMISSED_KEY = "cp.updates.dismissed";
 

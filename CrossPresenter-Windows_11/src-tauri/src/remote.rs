@@ -78,13 +78,6 @@ fn list_addresses() -> Vec<String> {
     addresses
 }
 
-fn primary_address() -> String {
-    list_addresses()
-        .into_iter()
-        .next()
-        .unwrap_or_else(|| "127.0.0.1".to_string())
-}
-
 fn load_or_create(app: &AppHandle) -> Result<(String, u16), String> {
     let dir = app.path().app_config_dir().map_err(|e| e.to_string())?;
     std::fs::create_dir_all(&dir).ok();
