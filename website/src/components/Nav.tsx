@@ -1,5 +1,23 @@
 import { useEffect, useState } from 'react'
 import { ArrowUpRight, Menu, X } from 'lucide-react'
+
+function useClock() {
+  const [time, setTime] = useState('')
+  useEffect(() => {
+    const tick = () => {
+      const now = new Date()
+      setTime(
+        [now.getHours(), now.getMinutes(), now.getSeconds()]
+          .map((n) => String(n).padStart(2, '0'))
+          .join(':'),
+      )
+    }
+    tick()
+    const id = window.setInterval(tick, 1000)
+    return () => window.clearInterval(id)
+  }, [])
+  return time
+}
 import { REPO_URL } from '../lib/releases'
 import Logo from './Logo'
 
@@ -17,6 +35,7 @@ const navLinks = [
 export default function Nav({ onNavigate, active = 'home' }: NavProps) {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const clock = useClock()
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8)
@@ -61,6 +80,9 @@ export default function Nav({ onNavigate, active = 'home' }: NavProps) {
         </nav>
 
         <div className="flex items-center gap-3 sm:gap-5">
+          <span className="hidden font-mono text-[10px] tabular-nums tracking-[0.18em] text-muted sm:block">
+            {clock}
+          </span>
           <a
             href={REPO_URL}
             target="_blank"
