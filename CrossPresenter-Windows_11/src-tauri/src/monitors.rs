@@ -72,9 +72,19 @@ fn monitor_name(m: &Monitor, index: usize) -> String {
 
 /// Label of the live window projecting onto `id`, if any.
 fn live_label_for(id: &str) -> String {
-    // Colons and 'x' are legal in window labels; spaces and slashes are not
-    // reliably so. The geometry id only contains digits, ':' and 'x'.
-    format!("{LIVE_LABEL_PREFIX}{id}")
+    // Window labels may only contain ASCII letters, digits, '-' and '_'.
+    // Monitor ids carry colons and 'x' (geometry), so sanitize them here.
+    let safe: String = id
+        .chars()
+        .map(|c| {
+            if c.is_ascii_alphanumeric() || c == '-' || c == '_' {
+                c
+            } else {
+                '_'
+            }
+        })
+        .collect();
+    format!("{LIVE_LABEL_PREFIX}{safe}")
 }
 
 /// Enumerate every physical display attached to the machine.
